@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>JP700 Pompa Seçim</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>JP700 Pompa Seçim Sistemi</h1>
+
+  <label>Debi (m³/h)</label>
+  <input id="flow" type="number" placeholder="Örn: 20" />
+
+  <label>Basma yüksekliği (m)</label>
+  <input id="head" type="number" placeholder="Örn: 35" />
+
+  <button onclick="selectPump()">Pompa Seç</button>
+
+  <div id="result"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
