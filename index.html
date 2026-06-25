@@ -2,21 +2,45 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <title>JP700 Pompa Seçim</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jessberger Pump Selector</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>JP700 Pompa Seçim Sistemi</h1>
 
-  <label>Debi (m³/h)</label>
-  <input id="flow" type="number" placeholder="Örn: 20" />
+  <header class="topbar">
+    <div>
+      <h1>Jessberger GmbH</h1>
+      <p>Eccentric Screw Pump Selector</p>
+    </div>
 
-  <label>Basma yüksekliği (m)</label>
-  <input id="head" type="number" placeholder="Örn: 35" />
+    <img src="images/logo.jpg" alt="Jessberger Logo" class="logo" />
+  </header>
 
-  <button onclick="selectPump()">Pompa Seç</button>
+  <main class="container">
 
-  <div id="result"></div>
+    <section class="selection-block">
+      <h2>ATEX Selection</h2>
+      <div class="button-group">
+        <button class="option-btn active" data-group="atex" data-value="Non-ATEX">Non-ATEX</button>
+        <button class="option-btn" data-group="atex" data-value="ATEX">ATEX</button>
+      </div>
+    </section>
+
+    <section class="selection-block">
+      <h2>Food Selection</h2>
+      <div class="button-group">
+        <button class="option-btn active" data-group="food" data-value="Non-food">Non-food</button>
+        <button class="option-btn" data-group="food" data-value="Food">Food</button>
+      </div>
+    </section>
+
+    <div class="summary">
+      <strong>Seçim:</strong>
+      <span id="summaryText">Non-ATEX / Non-food</span>
+    </div>
+
+  </main>
 
   <script src="script.js"></script>
 </body>

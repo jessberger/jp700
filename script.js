@@ -1,16 +1,28 @@
-function selectPump() {
-  const flow = Number(document.getElementById("flow").value);
-  const head = Number(document.getElementById("head").value);
+const selections = {
+  atex: "Non-ATEX",
+  food: "Non-food"
+};
 
-  let result = "";
+const buttons = document.querySelectorAll(".option-btn");
+const summaryText = document.getElementById("summaryText");
 
-  if (flow <= 20 && head <= 40) {
-    result = "Önerilen pompa: JP700-1";
-  } else if (flow <= 50 && head <= 60) {
-    result = "Önerilen pompa: JP700-2";
-  } else {
-    result = "Uygun pompa bulunamadı.";
-  }
+buttons.forEach(button => {
+  button.addEventListener("click", () => {
+    const group = button.dataset.group;
+    const value = button.dataset.value;
 
-  document.getElementById("result").innerText = result;
+    selections[group] = value;
+
+    document
+      .querySelectorAll(`.option-btn[data-group="${group}"]`)
+      .forEach(btn => btn.classList.remove("active"));
+
+    button.classList.add("active");
+
+    updateSummary();
+  });
+});
+
+function updateSummary() {
+  summaryText.textContent = `${selections.atex} / ${selections.food}`;
 }
