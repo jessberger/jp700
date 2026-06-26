@@ -49,18 +49,28 @@ const flowInputs = {
 
 Object.entries(flowInputs).forEach(([unit, input]) => {
   input.addEventListener("input", () => {
-    const value = Number(input.value);
+    const rawValue = input.value;
 
-    if (input.value === "") {
+    if (rawValue.trim() === "") {
       resetFlowInputs();
       return;
     }
+
+    const value = parseDecimal(rawValue);
 
     if (isNaN(value)) return;
 
     calculateFlow(unit, value);
   });
 });
+
+function parseDecimal(value) {
+  return Number(value.replace(",", "."));
+}
+
+function formatDecimal(value) {
+  return String(Math.round(value * 1000) / 1000).replace(".", ",");
+}
 
 function calculateFlow(unit, value) {
   let lmin;
@@ -85,9 +95,9 @@ function calculateFlow(unit, value) {
     lmin = value * 1000 / 60;
   }
 
-  flowInputs.lmin.value = roundNumber(lmin);
-  flowInputs.lhour.value = roundNumber(lhour);
-  flowInputs.m3hour.value = roundNumber(m3hour);
+  if (unit !== "lmin") flowInputs.lmin.value = formatDecimal(lmin);
+  if (unit !== "lhour") flowInputs.lhour.value = formatDecimal(lhour);
+  if (unit !== "m3hour") flowInputs.m3hour.value = formatDecimal(m3hour);
 
   Object.entries(flowInputs).forEach(([key, input]) => {
     input.disabled = key !== unit;
@@ -99,8 +109,4 @@ function resetFlowInputs() {
     input.value = "";
     input.disabled = false;
   });
-}
-
-function roundNumber(number) {
-  return Math.round(number * 1000) / 1000;
 }

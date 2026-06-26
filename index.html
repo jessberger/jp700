@@ -19,47 +19,49 @@
 
   <main class="container">
 
-    <section class="selection-block">
-      <h2>ATEX Selection</h2>
-      <div class="button-group">
-        <button class="option-btn active" data-group="atex" data-value="Non-ATEX">Non-ATEX</button>
-        <button class="option-btn" data-group="atex" data-value="ATEX">ATEX</button>
-      </div>
-    </section>
+    <div class="top-selections">
+      <section class="selection-block compact">
+        <h2>ATEX Selection</h2>
+        <div class="button-group">
+          <button class="option-btn active" data-group="atex" data-value="Non-ATEX">Non-ATEX</button>
+          <button class="option-btn" data-group="atex" data-value="ATEX">ATEX</button>
+        </div>
+      </section>
 
-    <section class="selection-block">
-      <h2>Food Selection</h2>
-      <div class="button-group">
-        <button class="option-btn active" data-group="food" data-value="Non-food">Non-food</button>
-        <button class="option-btn" data-group="food" data-value="Food">Food</button>
-      </div>
-    </section>
-
-<section class="selection-block">
-  <h2>Flow rate</h2>
-
-  <div class="flow-grid">
-    <div>
-      <label>Q (l/min)</label>
-      <input id="flowLMin" type="number" step="any" placeholder="l/min" />
+      <section class="selection-block compact">
+        <h2>Food Selection</h2>
+        <div class="button-group">
+          <button class="option-btn active" data-group="food" data-value="Non-food">Non-food</button>
+          <button class="option-btn" data-group="food" data-value="Food">Food</button>
+        </div>
+      </section>
     </div>
-
-    <div>
-      <label>Q (l/h)</label>
-      <input id="flowLHour" type="number" step="any" placeholder="l/h" />
-    </div>
-
-    <div>
-      <label>Q (m³/h)</label>
-      <input id="flowM3Hour" type="number" step="any" placeholder="m³/h" />
-    </div>
-  </div>
-</section>
 
     <div class="summary">
-      <strong>Seçim:</strong>
-      <span id="summaryText">Non-ATEX / Non-food</span>
+      <strong>SELECTION:</strong>
+      <span id="summaryText">Standard</span>
     </div>
+
+    <section class="selection-block">
+      <h2>Flow rate</h2>
+
+      <div class="flow-grid">
+        <div>
+          <label>Q (l/min)</label>
+          <input id="flowLMin" type="text" inputmode="decimal" placeholder="l/min" />
+        </div>
+
+        <div>
+          <label>Q (l/h)</label>
+          <input id="flowLHour" type="text" inputmode="decimal" placeholder="l/h" />
+        </div>
+
+        <div>
+          <label>Q (m³/h)</label>
+          <input id="flowM3Hour" type="text" inputmode="decimal" placeholder="m³/h" />
+        </div>
+      </div>
+    </section>
 
   </main>
 

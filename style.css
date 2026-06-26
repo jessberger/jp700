@@ -10,37 +10,45 @@ body {
 }
 
 .topbar {
-  height: 115px;
+  height: 105px;
   background: white;
   border-bottom: 1px solid #d8dee8;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 22px 45px;
+  padding: 18px 42px;
 }
 
 .topbar h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 26px;
   color: #0b2545;
 }
 
 .topbar p {
-  margin: 6px 0 0;
-  font-size: 17px;
+  margin: 5px 0 0;
+  font-size: 16px;
   color: #5d6f86;
 }
 
 .logo {
-  max-height: 60px;
+  max-height: 58px;
   max-width: 210px;
   object-fit: contain;
 }
 
 .container {
-  max-width: 620px;
-  margin: 45px auto;
+  max-width: 720px;
+  margin: 38px auto;
   padding: 0 20px;
+}
+
+.top-selections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  align-items: start;
+  margin-bottom: 14px;
 }
 
 .selection-block {
@@ -53,6 +61,14 @@ body {
   text-align: center;
 }
 
+.selection-block.compact {
+  margin-bottom: 8px;
+}
+
+.selection-block.compact h2 {
+  font-size: 16px;
+}
+
 .button-group {
   display: flex;
   width: 100%;
@@ -60,8 +76,8 @@ body {
 
 .option-btn {
   flex: 1;
-  padding: 15px;
-  font-size: 17px;
+  padding: 13px;
+  font-size: 15px;
   font-weight: bold;
   border: 2px solid #0053a6;
   background: white;
@@ -83,11 +99,12 @@ body {
 }
 
 .summary {
-  margin-top: 32px;
-  padding: 16px;
+  margin-top: 8px;
+  margin-bottom: 32px;
+  padding: 14px;
   background: white;
   border-left: 5px solid #0053a6;
-  font-size: 17px;
+  font-size: 16px;
   text-align: center;
   border-radius: 6px;
 }
