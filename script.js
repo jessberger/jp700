@@ -24,5 +24,19 @@ buttons.forEach(button => {
 });
 
 function updateSummary() {
-  summaryText.textContent = `${selections.atex} / ${selections.food}`;
+  let result = "";
+
+  if (selections.atex === "Non-ATEX" && selections.food === "Non-food") {
+    result = "Standard";
+  } else if (selections.atex === "ATEX" && selections.food === "Non-food") {
+    result = "ATEX";
+  } else if (selections.atex === "Non-ATEX" && selections.food === "Food") {
+    result = "Food";
+  } else if (selections.atex === "ATEX" && selections.food === "Food") {
+    result = "ATEX & Food";
+  }
+
+  summaryText.textContent = result;
 }
+
+updateSummary();
