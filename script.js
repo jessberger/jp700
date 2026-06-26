@@ -236,7 +236,7 @@ showRotationBtn.addEventListener("click", async () => {
   try {
     const [coefficients, abrasivityRows, viscosityRows] = await Promise.all([
       fetchCoefficients(),
-      fetchPropertyRows("abrasivita"),
+      fetchPropertyRows("abresivitat"),
       fetchPropertyRows("viskositat")
     ]);
 
@@ -324,8 +324,8 @@ async function fetchPropertyRows(tableName) {
 function renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosityRows) {
   rpmTableBody.innerHTML = "";
 
-  const abrasivityByModel = indexRowsByModel(abrasivityRows);
-  const viscosityByModel = indexRowsByModel(viscosityRows);
+  const abrasivityByModel = indexRowsBySelectionKey(abrasivityRows);
+  const viscosityByModel = indexRowsBySelectionKey(viscosityRows);
   const abrasivityGroup = getSelectedGroupNumber(fluidSelections.abrasivity);
   const viscosityGroup = getSelectedGroupNumber(fluidSelections.viscosity);
 
@@ -353,8 +353,8 @@ function renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosity
   });
 }
 
-function indexRowsByModel(rows) {
-  return new Map(rows.map(row => [String(row.model).trim(), row]));
+function indexRowsBySelectionKey(rows) {
+  return new Map(rows.map(row => [String(row.selection_key).trim(), row]));
 }
 
 function getSelectedGroupNumber(value) {
