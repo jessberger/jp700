@@ -114,16 +114,33 @@ function resetFlowInputs() {
 const pressureSlider = document.getElementById("pressureSlider");
 const pressureValue = document.getElementById("pressureValue");
 
-pressureSlider.addEventListener("input", () => {
-  pressureValue.value = pressureSlider.value;
+noUiSlider.create(pressureSlider, {
+  start: 0,
+  connect: [true, false],
+  step: 1,
+  range: {
+    min: 0,
+    max: 24
+  },
+  pips: {
+    mode: "values",
+    values: [0, 4, 8, 12, 16, 20, 24],
+    density: 4
+  },
+  format: {
+    to: value => Math.round(value),
+    from: value => Number(value)
+  }
+});
+
+pressureSlider.noUiSlider.on("update", values => {
+  pressureValue.value = values[0];
 });
 
 pressureValue.addEventListener("input", () => {
   let value = Number(pressureValue.value);
 
-  if (pressureValue.value === "") {
-    value = 0;
-  }
+  if (pressureValue.value === "") return;
 
   value = Math.round(value);
 
@@ -131,5 +148,5 @@ pressureValue.addEventListener("input", () => {
   if (value > 24) value = 24;
 
   pressureValue.value = value;
-  pressureSlider.value = value;
+  pressureSlider.noUiSlider.set(value);
 });

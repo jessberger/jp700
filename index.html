@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Jessberger Pump Selector</title>
-  <link rel="stylesheet" href="style.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.css" />  
+<link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
@@ -66,24 +67,17 @@
     <section class="selection-block">
       <h2>Pressure (bar)</h2>
 
-      <div class="pressure-row">
-        <input id="pressureSlider" type="range" min="0" max="24" step="1" value="0" />
-        <input id="pressureValue" type="number" min="0" max="24" step="1" value="0" />
-      </div>
-
-<div class="pressure-ticks">
-  <div><span>|</span><small>0</small></div>
-  <div><span>|</span><small>4</small></div>
-  <div><span>|</span><small>8</small></div>
-  <div><span>|</span><small>12</small></div>
-  <div><span>|</span><small>16</small></div>
-  <div><span>|</span><small>20</small></div>
-  <div><span>|</span><small>24</small></div>
+<div class="pressure-row">
+  <div id="pressureSlider"></div>
+  <input id="pressureValue" type="number" min="0" max="24" step="1" value="0" />
 </div>
+
+
     </section>
 
   </main>
 
+<script src="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

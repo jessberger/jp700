@@ -144,10 +144,7 @@ body {
   align-items: center;
 }
 
-#pressureSlider {
-  width: 100%;
-  cursor: pointer;
-}
+
 
 #pressureValue {
   width: 100%;
@@ -157,29 +154,59 @@ body {
   border-radius: 6px;
   text-align: center;
 }
-.pressure-ticks {
-    width: calc(100% - 95px);
-    display: flex;
-    justify-content: space-between;
-    margin-top: 3px;
-    padding: 0 6px;
+
+.pressure-row {
+  display: grid;
+  grid-template-columns: 1fr 80px;
+  gap: 18px;
+  align-items: center;
 }
 
-.pressure-ticks div{
-    width:0;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
+#pressureSlider {
+  margin: 22px 8px 32px;
 }
 
-.pressure-ticks span{
-    font-size:16px;
-    line-height:12px;
-    color:#666;
+.noUi-target {
+  border: none;
+  box-shadow: none;
+  background: #d8dee8;
+  height: 8px;
 }
 
-.pressure-ticks small{
-    margin-top:2px;
-    font-size:12px;
-    color:#666;
+.noUi-connect {
+  background: #0053a6;
+}
+
+.noUi-handle {
+  width: 22px !important;
+  height: 22px !important;
+  right: -11px !important;
+  top: -7px !important;
+  border-radius: 50%;
+  border: 2px solid #0053a6;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.noUi-handle::before,
+.noUi-handle::after {
+  display: none;
+}
+
+.noUi-marker {
+  background: #8a98aa;
+}
+
+.noUi-value {
+  font-size: 12px;
+  color: #5d6f86;
+}
+
+#pressureValue {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #b9c5d3;
+  border-radius: 6px;
+  text-align: center;
 }
