@@ -211,3 +211,26 @@ body {
   border-radius: 6px;
   text-align: center;
 }
+
+
+.selection-block,
+.summary {
+  background: white;
+  border: 1px solid #d8dee8;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 8px 24px rgba(11, 37, 69, 0.06);
+}
+
+.top-selections .selection-block {
+  padding: 18px;
+}
+
+.summary {
+  border-left: 5px solid #0053a6;
+}
+
+.flow-grid input,
+#pressureValue {
+  background: #ffffff;
+}
