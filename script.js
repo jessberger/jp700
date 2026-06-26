@@ -15,8 +15,19 @@ const calculateRotationBtn = document.getElementById("calculateRotationBtn");
 const showRotationBtn = document.getElementById("showRotationBtn");
 const backToDataBtn = document.getElementById("backToDataBtn");
 const backToFluidBtn = document.getElementById("backToFluidBtn");
+const backToRotationBtn = document.getElementById("backToRotationBtn");
 const resetButtons = document.querySelectorAll("[id^='resetFrom']");
 const rotationPage = document.getElementById("rotationPage");
+const pumpDetailPage = document.getElementById("pumpDetailPage");
+const pumpDetailLayout = document.getElementById("pumpDetailLayout");
+const pumpDetailImage = document.getElementById("pumpDetailImage");
+const pumpImageFallback = document.getElementById("pumpImageFallback");
+const pumpDetailTitle = document.getElementById("pumpDetailTitle");
+const detailPumpCode = document.getElementById("detailPumpCode");
+const detailFlowRate = document.getElementById("detailFlowRate");
+const detailPressure = document.getElementById("detailPressure");
+const detailSelection = document.getElementById("detailSelection");
+const detailOrientation = document.getElementById("detailOrientation");
 const rpmTableBody = document.getElementById("rpmTableBody");
 const rpmStatus = document.getElementById("rpmStatus");
 
@@ -250,12 +261,14 @@ showRotationBtn.addEventListener("click", async () => {
 
 backToDataBtn.addEventListener("click", showDataInputPage);
 backToFluidBtn.addEventListener("click", showFluidPage);
+backToRotationBtn.addEventListener("click", showRotationPage);
 resetButtons.forEach(button => button.addEventListener("click", resetToStart));
 
 function showDataInputPage() {
   dataInputPage.classList.remove("hidden");
   fluidPage.classList.add("hidden");
   rotationPage.classList.add("hidden");
+  pumpDetailPage.classList.add("hidden");
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -267,6 +280,7 @@ function showFluidPage() {
   dataInputPage.classList.add("hidden");
   fluidPage.classList.remove("hidden");
   rotationPage.classList.add("hidden");
+  pumpDetailPage.classList.add("hidden");
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -274,6 +288,15 @@ function showRotationPage() {
   dataInputPage.classList.add("hidden");
   fluidPage.classList.add("hidden");
   rotationPage.classList.remove("hidden");
+  pumpDetailPage.classList.add("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function showPumpDetailPage() {
+  dataInputPage.classList.add("hidden");
+  fluidPage.classList.add("hidden");
+  rotationPage.classList.add("hidden");
+  pumpDetailPage.classList.remove("hidden");
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -351,6 +374,10 @@ function renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosity
       row.classList.add("rpm-match");
     }
 
+    row.tabIndex = 0;
+    row.setAttribute("role", "button");
+    row.setAttribute("aria-label", `Select ${coefficient.model}`);
+
     row.innerHTML = `
       <td>${coefficient.model}</td>
       <td>${roundedRpm}</td>
@@ -360,8 +387,96 @@ function renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosity
       <td>${formatRangeValue(calculationRange, "max")}</td>
     `;
 
+    row.addEventListener("click", () => showPumpDetails(coefficient.model));
+    row.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        showPumpDetails(coefficient.model);
+      }
+    });
+
     rpmTableBody.appendChild(row);
   });
+}
+
+function showPumpDetails(model) {
+  pumpDetailTitle.textContent = model;
+  detailPumpCode.textContent = model;
+  detailFlowRate.textContent = getFlowRateSummary();
+  detailPressure.textContent = `${pressureValue.value || 0} bar`;
+  detailSelection.textContent = getSelectionLabel();
+  detailOrientation.textContent = selections.orientation;
+
+  updatePumpDetailImage(model);
+  showPumpDetailPage();
+}
+
+function getFlowRateSummary() {
+  const parts = [];
+
+  if (flowInputs.lmin.value) parts.push(`${flowInputs.lmin.value} l/min`);
+  if (flowInputs.lhour.value) parts.push(`${flowInputs.lhour.value} l/h`);
+  if (flowInputs.m3hour.value) parts.push(`${flowInputs.m3hour.value} m3/h`);
+
+  return parts.length ? parts.join(" / ") : "-";
+}
+
+function getSelectionLabel() {
+  let base = "";
+
+  if (selections.atex === "Non-ATEX" && selections.food === "Non-food") {
+    base = "Standard";
+  } else if (selections.atex === "ATEX" && selections.food === "Non-food") {
+    base = "ATEX";
+  } else if (selections.atex === "Non-ATEX" && selections.food === "Food") {
+    base = "Food";
+  } else {
+    base = "ATEX & Food";
+  }
+
+  return `${base} / ${selections.atex} / ${selections.food}`;
+}
+
+function updatePumpDetailImage(model) {
+  const orientationFolder = selections.orientation === "Horizontal" ? "horizontal" : "vertical";
+  const imageNames = getPumpImageNames(model);
+  const imagePaths = imageNames.flatMap(name => [
+    `images/pump_pictures/${orientationFolder}/${name}.jpg`,
+    `images/pump_pictures/${orientationFolder}/${name}.jpeg`,
+    `images/pump_pictures/${orientationFolder}/${name}.png`,
+    `images/pump_pictures/${orientationFolder}/${name}.webp`
+  ]);
+
+  pumpDetailLayout.classList.toggle("horizontal-pump", selections.orientation === "Horizontal");
+  pumpDetailLayout.classList.toggle("vertical-pump", selections.orientation !== "Horizontal");
+  pumpImageFallback.classList.add("hidden");
+  pumpDetailImage.classList.remove("hidden");
+
+  tryPumpImagePath(imagePaths, 0);
+}
+
+function getPumpImageNames(model) {
+  const clean = String(model).trim();
+  const lower = clean.toLowerCase();
+  const underscored = lower.replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  const dashed = lower.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const compact = lower.replace(/[^a-z0-9]+/g, "");
+
+  return Array.from(new Set([clean, lower, underscored, dashed, compact]));
+}
+
+function tryPumpImagePath(paths, index) {
+  if (index >= paths.length) {
+    pumpDetailImage.classList.add("hidden");
+    pumpImageFallback.classList.remove("hidden");
+    return;
+  }
+
+  pumpDetailImage.onerror = () => tryPumpImagePath(paths, index + 1);
+  pumpDetailImage.onload = () => {
+    pumpDetailImage.onerror = null;
+  };
+  pumpDetailImage.src = paths[index];
 }
 
 function indexRowsBySelectionKey(rows) {

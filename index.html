@@ -188,6 +188,56 @@
     </div>
   </section>
 
+  <section id="pumpDetailPage" class="container page-container hidden">
+    <div class="page-actions">
+      <button id="backToRotationBtn" class="nav-btn" type="button">BACK</button>
+      <button id="resetFromDetailBtn" class="nav-btn" type="button">BAŞA DÖN</button>
+    </div>
+
+    <div class="step-bar compact-step">
+      <span>Data Input</span>
+      <span class="step-arrow">&rsaquo;</span>
+      <span>Fluid Properties</span>
+      <span class="step-arrow">&rsaquo;</span>
+      <span>Rotation Speeds</span>
+      <span class="step-arrow">&rsaquo;</span>
+      <span class="active-step">Pump Details</span>
+    </div>
+
+    <section id="pumpDetailLayout" class="pump-detail-layout">
+      <div class="pump-image-panel">
+        <img id="pumpDetailImage" src="" alt="Selected pump" />
+        <div id="pumpImageFallback" class="pump-image-fallback hidden">Image not found</div>
+      </div>
+
+      <div class="pump-info-panel">
+        <h2 id="pumpDetailTitle">Pump Details</h2>
+        <dl class="pump-info-list">
+          <div>
+            <dt>Pump Code</dt>
+            <dd id="detailPumpCode">-</dd>
+          </div>
+          <div>
+            <dt>Flow Rate</dt>
+            <dd id="detailFlowRate">-</dd>
+          </div>
+          <div>
+            <dt>Pressure</dt>
+            <dd id="detailPressure">-</dd>
+          </div>
+          <div>
+            <dt>Selection</dt>
+            <dd id="detailSelection">-</dd>
+          </div>
+          <div>
+            <dt>Orientation</dt>
+            <dd id="detailOrientation">-</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+  </section>
+
   <script src="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
