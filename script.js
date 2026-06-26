@@ -13,6 +13,9 @@ const dataInputPage = document.getElementById("dataInputPage");
 const fluidPage = document.getElementById("fluidPage");
 const calculateRotationBtn = document.getElementById("calculateRotationBtn");
 const showRotationBtn = document.getElementById("showRotationBtn");
+const backToDataBtn = document.getElementById("backToDataBtn");
+const backToFluidBtn = document.getElementById("backToFluidBtn");
+const resetButtons = document.querySelectorAll("[id^='resetFrom']");
 const rotationPage = document.getElementById("rotationPage");
 const rpmTableBody = document.getElementById("rpmTableBody");
 const rpmStatus = document.getElementById("rpmStatus");
@@ -228,23 +231,36 @@ showRotationBtn.addEventListener("click", async () => {
 
   showRotationPage();
   rpmTableBody.innerHTML = "";
-  setStatus("Loading coefficients...");
+  setStatus("Loading calculation data...");
 
   try {
-    const coefficients = await fetchCoefficients();
-    renderRotationSpeeds(coefficients, qLiterMin);
+    const [coefficients, abrasivityRows, viscosityRows] = await Promise.all([
+      fetchCoefficients(),
+      fetchPropertyRows("abrasivita"),
+      fetchPropertyRows("viskositat")
+    ]);
+
+    renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosityRows);
     setStatus("");
   } catch (error) {
     rpmTableBody.innerHTML = "";
-    setStatus(error.message || "Coefficients could not be loaded.", true);
+    setStatus(error.message || "Calculation data could not be loaded.", true);
   }
 });
+
+backToDataBtn.addEventListener("click", showDataInputPage);
+backToFluidBtn.addEventListener("click", showFluidPage);
+resetButtons.forEach(button => button.addEventListener("click", resetToStart));
 
 function showDataInputPage() {
   dataInputPage.classList.remove("hidden");
   fluidPage.classList.add("hidden");
   rotationPage.classList.add("hidden");
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function resetToStart() {
+  showDataInputPage();
 }
 
 function showFluidPage() {
@@ -265,7 +281,7 @@ function getFlowRateLiterMin() {
   return parseDecimal(flowInputs.lmin.value) || 0;
 }
 
-async function fetchCoefficients() {
+function getSupabaseClient() {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     throw new Error("Supabase URL and anon key are missing.");
   }
@@ -274,7 +290,11 @@ async function fetchCoefficients() {
     throw new Error("Supabase library could not be loaded.");
   }
 
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+async function fetchCoefficients() {
+  const supabaseClient = getSupabaseClient();
   const { data, error } = await supabaseClient
     .from("coefficients")
     .select("model, constant, eccentricity, rotor_diameter, stator_pitch");
@@ -287,8 +307,27 @@ async function fetchCoefficients() {
   return data;
 }
 
-function renderRotationSpeeds(coefficients, qLiterMin) {
+async function fetchPropertyRows(tableName) {
+  const supabaseClient = getSupabaseClient();
+  const { data, error } = await supabaseClient
+    .from(tableName)
+    .select("*");
+
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error(`No data found in ${tableName}.`);
+  }
+
+  return data;
+}
+
+function renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosityRows) {
   rpmTableBody.innerHTML = "";
+
+  const abrasivityByModel = indexRowsByModel(abrasivityRows);
+  const viscosityByModel = indexRowsByModel(viscosityRows);
+  const abrasivityGroup = getSelectedGroupNumber(fluidSelections.abrasivity);
+  const viscosityGroup = getSelectedGroupNumber(fluidSelections.viscosity);
 
   coefficients.forEach(coefficient => {
     const rpm =
@@ -299,15 +338,68 @@ function renderRotationSpeeds(coefficients, qLiterMin) {
       (1 / Number(coefficient.stator_pitch)) /
       1000;
 
+    const abrasivityValue = getGroupValue(abrasivityByModel.get(coefficient.model), abrasivityGroup);
+    const viscosityValue = getGroupValue(viscosityByModel.get(coefficient.model), viscosityGroup);
+    const calculatingValue = getLowerPropertyValue(abrasivityValue, viscosityValue);
     const row = document.createElement("tr");
 
     row.innerHTML = `
       <td>${coefficient.model}</td>
       <td>${Math.round(rpm)}</td>
+      <td>${formatResultValue(calculatingValue)}</td>
     `;
 
     rpmTableBody.appendChild(row);
   });
+}
+
+function indexRowsByModel(rows) {
+  return new Map(rows.map(row => [String(row.model).trim(), row]));
+}
+
+function getSelectedGroupNumber(value) {
+  const groups = {
+    low: 1,
+    medium: 2,
+    high: 3,
+    "very-high": 4
+  };
+
+  return groups[value] || 1;
+}
+
+function getGroupValue(row, groupNumber) {
+  if (!row) return null;
+
+  const possibleColumns = [
+    `group_${groupNumber}`,
+    `group${groupNumber}`,
+    `grup_${groupNumber}`,
+    `grup${groupNumber}`,
+    `g${groupNumber}`,
+    String(groupNumber)
+  ];
+
+  const matchingKey = Object.keys(row).find(key =>
+    possibleColumns.includes(key.toLowerCase())
+  );
+
+  if (!matchingKey) return null;
+
+  const value = Number(row[matchingKey]);
+  return Number.isFinite(value) ? value : null;
+}
+
+function getLowerPropertyValue(abrasivityValue, viscosityValue) {
+  if (abrasivityValue === null && viscosityValue === null) return null;
+  if (abrasivityValue === null) return viscosityValue;
+  if (viscosityValue === null) return abrasivityValue;
+  return Math.min(abrasivityValue, viscosityValue);
+}
+
+function formatResultValue(value) {
+  if (value === null) return "-";
+  return String(Math.round(value * 1000) / 1000).replace(".", ",");
 }
 
 function setStatus(message, isError = false) {

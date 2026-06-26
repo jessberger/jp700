@@ -441,3 +441,36 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+
+.page-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.page-actions-end {
+  justify-content: flex-end;
+}
+
+.nav-btn {
+  padding: 8px 11px;
+  border: 1px solid #b9c5d3;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #0b2545;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nav-btn:hover {
+  border-color: #0053a6;
+  color: #0053a6;
+}
+
+.rpm-table th:nth-child(3),
+.rpm-table td:nth-child(3) {
+  width: 110px;
+}

@@ -18,6 +18,9 @@
   </header>
 
   <main id="dataInputPage" class="container page-container">
+    <div class="page-actions page-actions-end">
+      <button id="resetFromDataBtn" class="nav-btn" type="button">BAŞA DÖN</button>
+    </div>
     <div class="top-selections">
       <section class="selection-block compact">
         <h2>ATEX Selection</h2>
@@ -141,12 +144,22 @@
       </section>
     </div>
 
+    <div class="page-actions">
+      <button id="backToDataBtn" class="nav-btn" type="button">BACK</button>
+      <button id="resetFromFluidBtn" class="nav-btn" type="button">BAŞA DÖN</button>
+    </div>
+
     <button id="showRotationBtn" class="calculate-btn">
       CALCULATE ROTATION
     </button>
   </section>
 
   <section id="rotationPage" class="container page-container hidden">
+    <div class="page-actions">
+      <button id="backToFluidBtn" class="nav-btn" type="button">BACK</button>
+      <button id="resetFromRotationBtn" class="nav-btn" type="button">BAŞA DÖN</button>
+    </div>
+
     <div class="step-bar compact-step">
       <span>Data Input</span>
       <span class="step-arrow">&rsaquo;</span>
@@ -163,6 +176,7 @@
         <tr>
           <th>Pump Type</th>
           <th>RPM</th>
+          <th>CALCULATING</th>
         </tr>
       </thead>
       <tbody id="rpmTableBody"></tbody>
