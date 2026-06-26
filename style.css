@@ -157,23 +157,29 @@ body {
   border-radius: 6px;
   text-align: center;
 }
-.pressure-scale {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  margin-top: 6px;
-  margin-right: 95px;
-  font-size: 12px;
-  color: #5d6f86;
+.pressure-ticks {
+    width: calc(100% - 95px);
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+    padding: 0 6px;
 }
 
-.pressure-scale span {
-  text-align: center;
+.pressure-ticks div{
+    width:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
 }
 
-.pressure-scale span:first-child {
-  text-align: left;
+.pressure-ticks span{
+    font-size:16px;
+    line-height:12px;
+    color:#666;
 }
 
-.pressure-scale span:last-child {
-  text-align: right;
+.pressure-ticks small{
+    margin-top:2px;
+    font-size:12px;
+    color:#666;
 }
