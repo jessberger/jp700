@@ -418,7 +418,7 @@ function getFlowRateSummary() {
   if (flowInputs.lhour.value) parts.push(`${flowInputs.lhour.value} l/h`);
   if (flowInputs.m3hour.value) parts.push(`${flowInputs.m3hour.value} m3/h`);
 
-  return parts.length ? parts.join(" / ") : "-";
+  return parts.length ? parts.join(" = ") : "-";
 }
 
 function getSelectionLabel() {
@@ -434,7 +434,7 @@ function getSelectionLabel() {
     base = "ATEX & Food";
   }
 
-  return `${base} / ${selections.atex} / ${selections.food}`;
+  return base;
 }
 
 function updatePumpDetailImage(model) {
