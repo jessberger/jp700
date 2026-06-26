@@ -68,8 +68,8 @@ function updateSummary() {
 updateSummary();
 
 const fluidSelections = {
-  abrasivity: "low",
-  viscosity: "low"
+  abrasivity: "group1",
+  viscosity: "group1"
 };
 
 const propertyOptions = document.querySelectorAll(".property-option");
@@ -486,6 +486,10 @@ function indexRowsBySelectionKey(rows) {
 
 function getSelectedGroupNumber(value) {
   const groups = {
+    group1: 1,
+    group2: 2,
+    group3: 3,
+    group4: 4,
     low: 1,
     medium: 2,
     high: 3,
