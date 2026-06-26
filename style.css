@@ -488,3 +488,27 @@ body {
 .rpm-table td:nth-child(4) {
   width: 105px;
 }
+
+.rpm-table th:nth-child(2),
+.rpm-table td:nth-child(2),
+.rpm-table th:nth-child(3),
+.rpm-table td:nth-child(3),
+.rpm-table th:nth-child(5),
+.rpm-table td:nth-child(5) {
+  border-left: 3px solid #0b2545;
+}
+
+.rpm-table tr.rpm-match td {
+  background: #fff0d9;
+}
+
+.rpm-table tr.rpm-match td.lower-value {
+  background: #d9f0df;
+}
+
+.rpm-table th:nth-child(5),
+.rpm-table td:nth-child(5),
+.rpm-table th:nth-child(6),
+.rpm-table td:nth-child(6) {
+  width: 132px;
+}

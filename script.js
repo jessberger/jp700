@@ -338,17 +338,26 @@ function renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosity
       (1 / Number(coefficient.stator_pitch)) /
       1000;
 
+    const roundedRpm = Math.round(rpm);
     const abrasivityValue = getGroupValue(abrasivityByModel.get(coefficient.model), abrasivityGroup);
     const viscosityValue = getGroupValue(viscosityByModel.get(coefficient.model), viscosityGroup);
+    const selectedPropertyValue = getLowerPropertyValue(abrasivityValue, viscosityValue);
+    const calculationRange = getCalculationRange(selectedPropertyValue);
     const row = document.createElement("tr");
     const abrasivityIsLower = isLowerOrEqualValue(abrasivityValue, viscosityValue);
     const viscosityIsLower = isLowerOrEqualValue(viscosityValue, abrasivityValue);
 
+    if (isRpmInRange(roundedRpm, calculationRange)) {
+      row.classList.add("rpm-match");
+    }
+
     row.innerHTML = `
       <td>${coefficient.model}</td>
-      <td>${Math.round(rpm)}</td>
+      <td>${roundedRpm}</td>
       <td class="${abrasivityIsLower ? "lower-value" : ""}">${formatResultValue(abrasivityValue)}</td>
       <td class="${viscosityIsLower ? "lower-value" : ""}">${formatResultValue(viscosityValue)}</td>
+      <td>${formatRangeValue(calculationRange, "min")}</td>
+      <td>${formatRangeValue(calculationRange, "max")}</td>
     `;
 
     rpmTableBody.appendChild(row);
@@ -392,10 +401,52 @@ function getGroupValue(row, groupNumber) {
   return Number.isFinite(value) ? value : null;
 }
 
+function getLowerPropertyValue(abrasivityValue, viscosityValue) {
+  if (abrasivityValue === null && viscosityValue === null) return null;
+  if (abrasivityValue === null) return viscosityValue;
+  if (viscosityValue === null) return abrasivityValue;
+  return Math.min(abrasivityValue, viscosityValue);
+}
+
 function isLowerOrEqualValue(value, otherValue) {
   if (value === null) return false;
   if (otherValue === null) return true;
   return value <= otherValue;
+}
+
+function getCalculationRange(value) {
+  if (value === null) return null;
+
+  const ratio = getCalculationRatio(value);
+
+  return {
+    min: value * (1 - ratio),
+    max: value * (1 + ratio),
+    ratio
+  };
+}
+
+function getCalculationRatio(value) {
+  if (value <= 100) return 0.5;
+  if (value <= 500) return 0.3;
+  if (value <= 1000) return 0.2;
+  if (value <= 2000) return 0.1;
+  return 0.05;
+}
+
+function isRpmInRange(rpm, range) {
+  if (!range) return false;
+  return rpm >= range.min && rpm <= range.max;
+}
+
+function formatRangeValue(range, type) {
+  if (!range) return "-";
+
+  const sign = type === "min" ? "-" : "+";
+  const value = type === "min" ? range.min : range.max;
+  const percent = Math.round(range.ratio * 100);
+
+  return `${formatResultValue(value)} (${sign}%${percent})`;
 }
 
 function formatResultValue(value) {
