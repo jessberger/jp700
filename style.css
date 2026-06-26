@@ -45,8 +45,8 @@ body {
 
 .top-selections {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 22px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
   align-items: start;
   margin-bottom: 14px;
 }
@@ -66,7 +66,8 @@ body {
 }
 
 .selection-block.compact h2 {
-  font-size: 16px;
+  font-size: 14px;
+  margin-bottom: 8px;
 }
 
 .button-group {
@@ -76,8 +77,8 @@ body {
 
 .option-btn {
   flex: 1;
-  padding: 13px;
-  font-size: 15px;
+  padding: 10px 6px;
+  font-size: 13px;
   font-weight: bold;
   border: 2px solid #0053a6;
   background: white;
@@ -223,7 +224,7 @@ body {
 }
 
 .top-selections .selection-block {
-  padding: 18px;
+  padding: 14px;
 }
 
 .summary {
@@ -233,4 +234,10 @@ body {
 .flow-grid input,
 #pressureValue {
   background: #ffffff;
+}
+
+@media (max-width: 700px) {
+  .top-selections {
+    grid-template-columns: 1fr;
+  }
 }
