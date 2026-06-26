@@ -1,5 +1,6 @@
 const SUPABASE_URL = window.SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "";
+const IMAGE_CACHE_VERSION = "pump-images-2026-06-26-2";
 
 const selections = {
   atex: "Non-ATEX",
@@ -476,7 +477,7 @@ function tryPumpImagePath(paths, index) {
   pumpDetailImage.onload = () => {
     pumpDetailImage.onerror = null;
   };
-  pumpDetailImage.src = paths[index];
+  pumpDetailImage.src = `${paths[index]}?v=${IMAGE_CACHE_VERSION}`;
 }
 
 function indexRowsBySelectionKey(rows) {
