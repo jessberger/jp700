@@ -52,6 +52,8 @@
       <span id="summaryText">Standard</span>
     </div>
 
+<div class="section-divider"></div>
+
     <section class="selection-block">
       <h2>Flow rate</h2>
 
@@ -82,9 +84,35 @@
 </div>
 
 
+<button id="calculateRotationBtn" class="calculate-btn">
+  CALCULATE ROTATION
+</button>
+
     </section>
 
   </main>
+
+
+<section id="rotationPage" class="page hidden">
+  <div class="step-bar">
+    <span>Data Input</span>
+    <span class="step-arrow">›</span>
+    <span class="active-step">Rotation Speeds</span>
+  </div>
+
+  <h2>Rotation Speeds</h2>
+
+  <table class="rpm-table">
+    <thead>
+      <tr>
+        <th>Pump Type</th>
+        <th>RPM</th>
+      </tr>
+    </thead>
+    <tbody id="rpmTableBody"></tbody>
+  </table>
+</section>
+
 
 <script src="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.js"></script>
   <script src="script.js"></script>

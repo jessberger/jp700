@@ -241,3 +241,77 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+
+.section-divider {
+  height: 1px;
+  background: #d8dee8;
+  margin: 26px 0 32px;
+}
+
+.calculate-btn {
+  width: 100%;
+  margin-top: 26px;
+  padding: 15px;
+  font-size: 15px;
+  font-weight: bold;
+  border: none;
+  border-radius: 9px;
+  background: #0053a6;
+  color: white;
+  cursor: pointer;
+}
+
+.calculate-btn:hover {
+  background: #003f7d;
+}
+
+.hidden {
+  display: none;
+}
+
+.step-bar {
+  margin-bottom: 24px;
+  padding: 14px;
+  background: white;
+  border: 1px solid #d8dee8;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: bold;
+  color: #5d6f86;
+}
+
+.step-arrow {
+  margin: 0 10px;
+  color: #0053a6;
+}
+
+.active-step {
+  color: #0053a6;
+}
+
+.rpm-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(11, 37, 69, 0.06);
+}
+
+.rpm-table th,
+.rpm-table td {
+  padding: 14px;
+  border-bottom: 1px solid #d8dee8;
+  text-align: center;
+}
+
+.rpm-table th {
+  background: #0053a6;
+  color: white;
+}
+
+.rpm-table td:first-child {
+  font-weight: bold;
+  text-align: left;
+}

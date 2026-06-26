@@ -151,3 +151,70 @@ pressureValue.addEventListener("input", () => {
   pressureValue.value = value;
   pressureSlider.noUiSlider.set(value);
 });
+
+
+const calculateRotationBtn = document.getElementById("calculateRotationBtn");
+const rotationPage = document.getElementById("rotationPage");
+const rpmTableBody = document.getElementById("rpmTableBody");
+
+// Şimdilik örnek motor verileri.
+// Burayı senin gerçek pump coefficient tablonla değiştireceğiz.
+const pumpTypes = [
+  {
+    name: "JP-700.12.1",
+    constant: 1,
+    exzentrizitat: 1,
+    rotorDurchmesser: 1,
+    statorSteigung: 1
+  },
+  {
+    name: "JP-700.12.2",
+    constant: 1,
+    exzentrizitat: 1,
+    rotorDurchmesser: 1,
+    statorSteigung: 1
+  }
+];
+
+calculateRotationBtn.addEventListener("click", () => {
+  const qLiterMin = getFlowRateLiterMin();
+
+  rpmTableBody.innerHTML = "";
+
+  pumpTypes.forEach(pump => {
+    const rpm =
+      qLiterMin *
+      (1 / pump.constant) *
+      (1 / pump.exzentrizitat) *
+      (1 / pump.rotorDurchmesser) *
+      (1 / pump.statorSteigung) /
+      1000;
+
+    const roundedRpm = Math.round(rpm);
+
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${pump.name}</td>
+      <td>${roundedRpm}</td>
+    `;
+
+    rpmTableBody.appendChild(row);
+  });
+
+  rotationPage.classList.remove("hidden");
+  rotationPage.scrollIntoView({ behavior: "smooth" });
+});
+
+function getFlowRateLiterMin() {
+  // Burada input id'lerini kendi mevcut HTML'ine göre kontrol et.
+  // Eğer flow input'unun id'si farklıysa sadece burayı değiştir.
+  const flowInput = document.getElementById("flowRate");
+
+  if (!flowInput) {
+    alert("Flow rate input bulunamadı.");
+    return 0;
+  }
+
+  return Number(flowInput.value) || 0;
+}
