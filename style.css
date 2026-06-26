@@ -157,3 +157,23 @@ body {
   border-radius: 6px;
   text-align: center;
 }
+.pressure-scale {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-top: 6px;
+  margin-right: 95px;
+  font-size: 12px;
+  color: #5d6f86;
+}
+
+.pressure-scale span {
+  text-align: center;
+}
+
+.pressure-scale span:first-child {
+  text-align: left;
+}
+
+.pressure-scale span:last-child {
+  text-align: right;
+}
