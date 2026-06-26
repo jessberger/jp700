@@ -110,3 +110,26 @@ function resetFlowInputs() {
     input.disabled = false;
   });
 }
+
+const pressureSlider = document.getElementById("pressureSlider");
+const pressureValue = document.getElementById("pressureValue");
+
+pressureSlider.addEventListener("input", () => {
+  pressureValue.value = pressureSlider.value;
+});
+
+pressureValue.addEventListener("input", () => {
+  let value = Number(pressureValue.value);
+
+  if (pressureValue.value === "") {
+    value = 0;
+  }
+
+  value = Math.round(value);
+
+  if (value < 0) value = 0;
+  if (value > 24) value = 24;
+
+  pressureValue.value = value;
+  pressureSlider.value = value;
+});

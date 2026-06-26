@@ -136,3 +136,24 @@ body {
   background: #e9eef5;
   color: #5d6f86;
 }
+
+.pressure-row {
+  display: grid;
+  grid-template-columns: 1fr 80px;
+  gap: 15px;
+  align-items: center;
+}
+
+#pressureSlider {
+  width: 100%;
+  cursor: pointer;
+}
+
+#pressureValue {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #b9c5d3;
+  border-radius: 6px;
+  text-align: center;
+}
