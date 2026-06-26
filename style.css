@@ -200,6 +200,7 @@ body {
 .noUi-value {
   font-size: 12px;
   color: #5d6f86;
+  margin-top: 10px;
 }
 
 #pressureValue {
