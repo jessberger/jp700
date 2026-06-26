@@ -346,7 +346,7 @@ body {
 
 .compact-step {
   margin-bottom: 16px;
-  padding: 9px 12px;
+  padding: 7px 10px;
   border-radius: 8px;
   font-size: 12px;
   line-height: 1.2;
@@ -415,9 +415,10 @@ body {
 }
 
 .rpm-table {
-  max-width: 520px;
+  max-width: none;
+  min-width: 820px;
   margin: 0 auto;
-  font-size: 13px;
+  font-size: 12px;
   border-radius: 8px;
 }
 
@@ -486,7 +487,7 @@ body {
 .rpm-table td:nth-child(3),
 .rpm-table th:nth-child(4),
 .rpm-table td:nth-child(4) {
-  width: 105px;
+  width: 96px;
 }
 
 .rpm-table th:nth-child(2),
@@ -510,5 +511,23 @@ body {
 .rpm-table td:nth-child(5),
 .rpm-table th:nth-child(6),
 .rpm-table td:nth-child(6) {
-  width: 132px;
+  width: 124px;
+}
+
+#rotationPage {
+  max-width: 980px;
+}
+
+.rpm-table-wrapper {
+  overflow-x: auto;
+}
+
+.rpm-table td:first-child,
+.rpm-table th:first-child {
+  white-space: nowrap;
+  width: 150px;
+}
+
+.rpm-table td {
+  line-height: 1.15;
 }
