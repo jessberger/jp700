@@ -82,13 +82,75 @@
     </section>
 
     <button id="calculateRotationBtn" class="calculate-btn">
-      CALCULATE ROTATION
+      NEXT
     </button>
   </main>
 
-  <section id="rotationPage" class="container page-container hidden">
-    <div class="step-bar">
+  <section id="fluidPage" class="container page-container hidden">
+    <div class="step-bar compact-step">
       <span>Data Input</span>
+      <span class="step-arrow">&rsaquo;</span>
+      <span class="active-step">Fluid Properties</span>
+      <span class="step-arrow">&rsaquo;</span>
+      <span>Rotation Speeds</span>
+    </div>
+
+    <div class="fluid-grid">
+      <section class="selection-block fluid-card">
+        <h2>Abrasivity</h2>
+        <div class="property-options">
+          <button class="property-option active" data-group="abrasivity" data-value="low">
+            <span>Low</span>
+            <small>xxxxx</small>
+          </button>
+          <button class="property-option" data-group="abrasivity" data-value="medium">
+            <span>Medium</span>
+            <small>xxxxx</small>
+          </button>
+          <button class="property-option" data-group="abrasivity" data-value="high">
+            <span>High</span>
+            <small>xxxxx</small>
+          </button>
+          <button class="property-option" data-group="abrasivity" data-value="very-high">
+            <span>Very High</span>
+            <small>xxxxx</small>
+          </button>
+        </div>
+      </section>
+
+      <section class="selection-block fluid-card">
+        <h2>Viscosity</h2>
+        <div class="property-options">
+          <button class="property-option active" data-group="viscosity" data-value="low">
+            <span>Low</span>
+            <small>xxxxx</small>
+          </button>
+          <button class="property-option" data-group="viscosity" data-value="medium">
+            <span>Medium</span>
+            <small>xxxxx</small>
+          </button>
+          <button class="property-option" data-group="viscosity" data-value="high">
+            <span>High</span>
+            <small>xxxxx</small>
+          </button>
+          <button class="property-option" data-group="viscosity" data-value="very-high">
+            <span>Very High</span>
+            <small>xxxxx</small>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <button id="showRotationBtn" class="calculate-btn">
+      CALCULATE ROTATION
+    </button>
+  </section>
+
+  <section id="rotationPage" class="container page-container hidden">
+    <div class="step-bar compact-step">
+      <span>Data Input</span>
+      <span class="step-arrow">&rsaquo;</span>
+      <span>Fluid Properties</span>
       <span class="step-arrow">&rsaquo;</span>
       <span class="active-step">Rotation Speeds</span>
     </div>

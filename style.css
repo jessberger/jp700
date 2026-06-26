@@ -342,3 +342,102 @@ body {
   width: 100%;
   accent-color: #0053a6;
 }
+
+
+.compact-step {
+  margin-bottom: 16px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+
+.compact-step .step-arrow {
+  margin: 0 6px;
+}
+
+#rotationPage h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.fluid-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.fluid-card {
+  padding: 18px;
+}
+
+.fluid-card h2 {
+  margin: 0 0 12px;
+  font-size: 17px;
+}
+
+.property-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.property-option {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #b9c5d3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0b2545;
+  text-align: left;
+  cursor: pointer;
+}
+
+.property-option span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.property-option small {
+  font-size: 11px;
+  line-height: 1.25;
+  color: #5d6f86;
+}
+
+.property-option.active {
+  border-color: #0053a6;
+  background: #eef6ff;
+  box-shadow: inset 3px 0 0 #0053a6;
+}
+
+.rpm-table {
+  max-width: 520px;
+  margin: 0 auto;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+.rpm-table th,
+.rpm-table td {
+  padding: 9px 12px;
+}
+
+.rpm-table th {
+  font-size: 12px;
+}
+
+.status-message {
+  min-height: 18px;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+@media (max-width: 700px) {
+  .fluid-grid {
+    grid-template-columns: 1fr;
+  }
+}

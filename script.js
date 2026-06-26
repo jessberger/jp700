@@ -10,7 +10,9 @@ const selections = {
 const buttons = document.querySelectorAll(".option-btn");
 const summaryText = document.getElementById("summaryText");
 const dataInputPage = document.getElementById("dataInputPage");
+const fluidPage = document.getElementById("fluidPage");
 const calculateRotationBtn = document.getElementById("calculateRotationBtn");
+const showRotationBtn = document.getElementById("showRotationBtn");
 const rotationPage = document.getElementById("rotationPage");
 const rpmTableBody = document.getElementById("rpmTableBody");
 const rpmStatus = document.getElementById("rpmStatus");
@@ -49,6 +51,28 @@ function updateSummary() {
 }
 
 updateSummary();
+
+const fluidSelections = {
+  abrasivity: "low",
+  viscosity: "low"
+};
+
+const propertyOptions = document.querySelectorAll(".property-option");
+
+propertyOptions.forEach(option => {
+  option.addEventListener("click", () => {
+    const group = option.dataset.group;
+    const value = option.dataset.value;
+
+    fluidSelections[group] = value;
+
+    document
+      .querySelectorAll(`.property-option[data-group="${group}"]`)
+      .forEach(button => button.classList.remove("active"));
+
+    option.classList.add("active");
+  });
+});
 
 const flowInputs = {
   lmin: document.getElementById("flowLMin"),
@@ -182,11 +206,23 @@ pressureValue.addEventListener("input", () => {
   pressureSlider.noUiSlider.set(value);
 });
 
-calculateRotationBtn.addEventListener("click", async () => {
+calculateRotationBtn.addEventListener("click", () => {
   const qLiterMin = getFlowRateLiterMin();
 
   if (!qLiterMin || qLiterMin <= 0) {
     alert("Please enter a valid flow rate.");
+    return;
+  }
+
+  showFluidPage();
+});
+
+showRotationBtn.addEventListener("click", async () => {
+  const qLiterMin = getFlowRateLiterMin();
+
+  if (!qLiterMin || qLiterMin <= 0) {
+    alert("Please enter a valid flow rate.");
+    showDataInputPage();
     return;
   }
 
@@ -204,8 +240,23 @@ calculateRotationBtn.addEventListener("click", async () => {
   }
 });
 
+function showDataInputPage() {
+  dataInputPage.classList.remove("hidden");
+  fluidPage.classList.add("hidden");
+  rotationPage.classList.add("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function showFluidPage() {
+  dataInputPage.classList.add("hidden");
+  fluidPage.classList.remove("hidden");
+  rotationPage.classList.add("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 function showRotationPage() {
   dataInputPage.classList.add("hidden");
+  fluidPage.classList.add("hidden");
   rotationPage.classList.remove("hidden");
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
