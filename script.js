@@ -1,3 +1,6 @@
+const SUPABASE_URL = window.SUPABASE_URL || "";
+const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "";
+
 const selections = {
   atex: "Non-ATEX",
   food: "Non-food",
@@ -6,6 +9,11 @@ const selections = {
 
 const buttons = document.querySelectorAll(".option-btn");
 const summaryText = document.getElementById("summaryText");
+const dataInputPage = document.getElementById("dataInputPage");
+const calculateRotationBtn = document.getElementById("calculateRotationBtn");
+const rotationPage = document.getElementById("rotationPage");
+const rpmTableBody = document.getElementById("rpmTableBody");
+const rpmStatus = document.getElementById("rpmStatus");
 
 buttons.forEach(button => {
   button.addEventListener("click", () => {
@@ -66,7 +74,7 @@ Object.entries(flowInputs).forEach(([unit, input]) => {
 });
 
 function parseDecimal(value) {
-  return Number(value.replace(",", "."));
+  return Number(String(value).replace(",", "."));
 }
 
 function formatDecimal(value) {
@@ -115,24 +123,46 @@ function resetFlowInputs() {
 const pressureSlider = document.getElementById("pressureSlider");
 const pressureValue = document.getElementById("pressureValue");
 
-noUiSlider.create(pressureSlider, {
-  start: 0,
-  connect: [true, false],
-  step: 1,
-  range: {
-    min: 0,
-    max: 24
-  },
-  pips: {
-    mode: "values",
-    values: [0, 4, 8, 12, 16, 20, 24],
-    density: 4
-  },
-  format: {
-    to: value => Math.round(value),
-    from: value => Number(value)
-  }
-});
+if (window.noUiSlider) {
+  noUiSlider.create(pressureSlider, {
+    start: 0,
+    connect: [true, false],
+    step: 1,
+    range: {
+      min: 0,
+      max: 24
+    },
+    pips: {
+      mode: "values",
+      values: [0, 4, 8, 12, 16, 20, 24],
+      density: 4
+    },
+    format: {
+      to: value => Math.round(value),
+      from: value => Number(value)
+    }
+  });
+} else {
+  const fallbackSlider = document.createElement("input");
+  fallbackSlider.type = "range";
+  fallbackSlider.min = "0";
+  fallbackSlider.max = "24";
+  fallbackSlider.step = "1";
+  fallbackSlider.value = "0";
+  fallbackSlider.className = "pressure-fallback-slider";
+  pressureSlider.replaceChildren(fallbackSlider);
+  pressureSlider.noUiSlider = {
+    set(value) {
+      fallbackSlider.value = String(value);
+      pressureValue.value = String(value);
+    },
+    on(eventName, handler) {
+      if (eventName !== "update") return;
+      fallbackSlider.addEventListener("input", () => handler([fallbackSlider.value]));
+      handler([fallbackSlider.value]);
+    }
+  };
+}
 
 pressureSlider.noUiSlider.on("update", values => {
   pressureValue.value = values[0];
@@ -152,69 +182,84 @@ pressureValue.addEventListener("input", () => {
   pressureSlider.noUiSlider.set(value);
 });
 
-
-const calculateRotationBtn = document.getElementById("calculateRotationBtn");
-const rotationPage = document.getElementById("rotationPage");
-const rpmTableBody = document.getElementById("rpmTableBody");
-
-// Şimdilik örnek motor verileri.
-// Burayı senin gerçek pump coefficient tablonla değiştireceğiz.
-const pumpTypes = [
-  {
-    name: "JP-700.12.1",
-    constant: 1,
-    exzentrizitat: 1,
-    rotorDurchmesser: 1,
-    statorSteigung: 1
-  },
-  {
-    name: "JP-700.12.2",
-    constant: 1,
-    exzentrizitat: 1,
-    rotorDurchmesser: 1,
-    statorSteigung: 1
-  }
-];
-
-calculateRotationBtn.addEventListener("click", () => {
+calculateRotationBtn.addEventListener("click", async () => {
   const qLiterMin = getFlowRateLiterMin();
 
+  if (!qLiterMin || qLiterMin <= 0) {
+    alert("Please enter a valid flow rate.");
+    return;
+  }
+
+  showRotationPage();
+  rpmTableBody.innerHTML = "";
+  setStatus("Loading coefficients...");
+
+  try {
+    const coefficients = await fetchCoefficients();
+    renderRotationSpeeds(coefficients, qLiterMin);
+    setStatus("");
+  } catch (error) {
+    rpmTableBody.innerHTML = "";
+    setStatus(error.message || "Coefficients could not be loaded.", true);
+  }
+});
+
+function showRotationPage() {
+  dataInputPage.classList.add("hidden");
+  rotationPage.classList.remove("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function getFlowRateLiterMin() {
+  return parseDecimal(flowInputs.lmin.value) || 0;
+}
+
+async function fetchCoefficients() {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error("Supabase URL and anon key are missing.");
+  }
+
+  if (!window.supabase || !window.supabase.createClient) {
+    throw new Error("Supabase library could not be loaded.");
+  }
+
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const { data, error } = await supabaseClient
+    .from("coefficients")
+    .select("model, constant, eccentricity, rotor_diameter, stator_pitch");
+
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("No coefficients found.");
+  }
+
+  return data;
+}
+
+function renderRotationSpeeds(coefficients, qLiterMin) {
   rpmTableBody.innerHTML = "";
 
-  pumpTypes.forEach(pump => {
+  coefficients.forEach(coefficient => {
     const rpm =
       qLiterMin *
-      (1 / pump.constant) *
-      (1 / pump.exzentrizitat) *
-      (1 / pump.rotorDurchmesser) *
-      (1 / pump.statorSteigung) /
+      (1 / Number(coefficient.constant)) *
+      (1 / Number(coefficient.eccentricity)) *
+      (1 / Number(coefficient.rotor_diameter)) *
+      (1 / Number(coefficient.stator_pitch)) /
       1000;
-
-    const roundedRpm = Math.round(rpm);
 
     const row = document.createElement("tr");
 
     row.innerHTML = `
-      <td>${pump.name}</td>
-      <td>${roundedRpm}</td>
+      <td>${coefficient.model}</td>
+      <td>${Math.round(rpm)}</td>
     `;
 
     rpmTableBody.appendChild(row);
   });
+}
 
-  rotationPage.classList.remove("hidden");
-  rotationPage.scrollIntoView({ behavior: "smooth" });
-});
-
-function getFlowRateLiterMin() {
-  // Burada input id'lerini kendi mevcut HTML'ine göre kontrol et.
-  // Eğer flow input'unun id'si farklıysa sadece burayı değiştir.
-  const flowInput = document.getElementById("flowRate");
-
-  if (!flowInput) {
-    alert("Flow rate input bulunamadı.");
-    return 0;
-  }
-
-  return Number(flowInput.value) || 0;
+function setStatus(message, isError = false) {
+  rpmStatus.textContent = message;
+  rpmStatus.classList.toggle("error", isError);
 }

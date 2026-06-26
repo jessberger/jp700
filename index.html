@@ -4,11 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Jessberger Pump Selector</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.css" />  
-<link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
   <header class="topbar">
     <div>
       <h1>Jessberger GmbH</h1>
@@ -18,8 +17,7 @@
     <img src="images/logo.jpg" alt="Jessberger Logo" class="logo" />
   </header>
 
-  <main class="container">
-
+  <main id="dataInputPage" class="container page-container">
     <div class="top-selections">
       <section class="selection-block compact">
         <h2>ATEX Selection</h2>
@@ -37,14 +35,13 @@
         </div>
       </section>
 
-<section class="selection-block compact">
-  <h2>Orientation</h2>
-  <div class="button-group">
-    <button class="option-btn active" data-group="orientation" data-value="Vertical">Vertical</button>
-    <button class="option-btn" data-group="orientation" data-value="Horizontal">Horizontal</button>
-  </div>
-</section>
-
+      <section class="selection-block compact">
+        <h2>Orientation</h2>
+        <div class="button-group">
+          <button class="option-btn active" data-group="orientation" data-value="Vertical">Vertical</button>
+          <button class="option-btn" data-group="orientation" data-value="Horizontal">Horizontal</button>
+        </div>
+      </section>
     </div>
 
     <div class="summary">
@@ -52,7 +49,7 @@
       <span id="summaryText">Standard</span>
     </div>
 
-<div class="section-divider"></div>
+    <div class="section-divider"></div>
 
     <section class="selection-block">
       <h2>Flow rate</h2>
@@ -69,8 +66,8 @@
         </div>
 
         <div>
-          <label>Q (m³/h)</label>
-          <input id="flowM3Hour" type="text" inputmode="decimal" placeholder="m³/h" />
+          <label>Q (m3/h)</label>
+          <input id="flowM3Hour" type="text" inputmode="decimal" placeholder="m3/h" />
         </div>
       </div>
     </section>
@@ -78,43 +75,44 @@
     <section class="selection-block">
       <h2>Pressure (bar)</h2>
 
-<div class="pressure-row">
-  <div id="pressureSlider"></div>
-  <input id="pressureValue" type="number" min="0" max="24" step="1" value="0" />
-</div>
-
-
-<button id="calculateRotationBtn" class="calculate-btn">
-  CALCULATE ROTATION
-</button>
-
+      <div class="pressure-row">
+        <div id="pressureSlider"></div>
+        <input id="pressureValue" type="number" min="0" max="24" step="1" value="0" />
+      </div>
     </section>
 
+    <button id="calculateRotationBtn" class="calculate-btn">
+      CALCULATE ROTATION
+    </button>
   </main>
 
+  <section id="rotationPage" class="container page-container hidden">
+    <div class="step-bar">
+      <span>Data Input</span>
+      <span class="step-arrow">&rsaquo;</span>
+      <span class="active-step">Rotation Speeds</span>
+    </div>
 
-<section id="rotationPage" class="page hidden">
-  <div class="step-bar">
-    <span>Data Input</span>
-    <span class="step-arrow">›</span>
-    <span class="active-step">Rotation Speeds</span>
-  </div>
+    <h2>Rotation Speeds</h2>
+    <div id="rpmStatus" class="status-message" aria-live="polite"></div>
 
-  <h2>Rotation Speeds</h2>
+    <table class="rpm-table">
+      <thead>
+        <tr>
+          <th>Pump Type</th>
+          <th>RPM</th>
+        </tr>
+      </thead>
+      <tbody id="rpmTableBody"></tbody>
+    </table>
+  </section>
 
-  <table class="rpm-table">
-    <thead>
-      <tr>
-        <th>Pump Type</th>
-        <th>RPM</th>
-      </tr>
-    </thead>
-    <tbody id="rpmTableBody"></tbody>
-  </table>
-</section>
-
-
-<script src="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    window.SUPABASE_URL = "";
+    window.SUPABASE_ANON_KEY = "";
+  </script>
   <script src="script.js"></script>
 </body>
 </html>

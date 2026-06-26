@@ -315,3 +315,30 @@ body {
   font-weight: bold;
   text-align: left;
 }
+
+.page-container.hidden {
+  display: none;
+}
+
+.status-message {
+  min-height: 22px;
+  margin: 0 0 14px;
+  color: #5d6f86;
+  text-align: center;
+  font-size: 14px;
+}
+
+.status-message.error {
+  color: #b42318;
+}
+
+#rotationPage h2 {
+  text-align: center;
+  margin: 0 0 14px;
+}
+
+
+.pressure-fallback-slider {
+  width: 100%;
+  accent-color: #0053a6;
+}
