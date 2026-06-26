@@ -340,13 +340,15 @@ function renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosity
 
     const abrasivityValue = getGroupValue(abrasivityByModel.get(coefficient.model), abrasivityGroup);
     const viscosityValue = getGroupValue(viscosityByModel.get(coefficient.model), viscosityGroup);
-    const calculatingValue = getLowerPropertyValue(abrasivityValue, viscosityValue);
     const row = document.createElement("tr");
+    const abrasivityIsLower = isLowerOrEqualValue(abrasivityValue, viscosityValue);
+    const viscosityIsLower = isLowerOrEqualValue(viscosityValue, abrasivityValue);
 
     row.innerHTML = `
       <td>${coefficient.model}</td>
       <td>${Math.round(rpm)}</td>
-      <td>${formatResultValue(calculatingValue)}</td>
+      <td class="${abrasivityIsLower ? "lower-value" : ""}">${formatResultValue(abrasivityValue)}</td>
+      <td class="${viscosityIsLower ? "lower-value" : ""}">${formatResultValue(viscosityValue)}</td>
     `;
 
     rpmTableBody.appendChild(row);
@@ -390,11 +392,10 @@ function getGroupValue(row, groupNumber) {
   return Number.isFinite(value) ? value : null;
 }
 
-function getLowerPropertyValue(abrasivityValue, viscosityValue) {
-  if (abrasivityValue === null && viscosityValue === null) return null;
-  if (abrasivityValue === null) return viscosityValue;
-  if (viscosityValue === null) return abrasivityValue;
-  return Math.min(abrasivityValue, viscosityValue);
+function isLowerOrEqualValue(value, otherValue) {
+  if (value === null) return false;
+  if (otherValue === null) return true;
+  return value <= otherValue;
 }
 
 function formatResultValue(value) {

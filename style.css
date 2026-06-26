@@ -474,3 +474,17 @@ body {
 .rpm-table td:nth-child(3) {
   width: 110px;
 }
+
+
+.rpm-table td.lower-value {
+  background: #e8f5ee;
+  color: #146c43;
+  font-weight: 800;
+}
+
+.rpm-table th:nth-child(3),
+.rpm-table td:nth-child(3),
+.rpm-table th:nth-child(4),
+.rpm-table td:nth-child(4) {
+  width: 105px;
+}
