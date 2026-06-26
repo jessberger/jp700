@@ -91,3 +91,31 @@ body {
   text-align: center;
   border-radius: 6px;
 }
+
+.flow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.flow-grid label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #0b2545;
+}
+
+.flow-grid input {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  border: 1px solid #b9c5d3;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.flow-grid input:disabled {
+  background: #e9eef5;
+  color: #5d6f86;
+}
