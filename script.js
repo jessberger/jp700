@@ -1,6 +1,7 @@
 const selections = {
   atex: "Non-ATEX",
-  food: "Non-food"
+  food: "Non-food",
+  orientation: "Vertical"
 };
 
 const buttons = document.querySelectorAll(".option-btn");
@@ -36,7 +37,7 @@ function updateSummary() {
     result = "ATEX & Food";
   }
 
-  summaryText.textContent = result;
+  summaryText.textContent = `${result} ${selections.orientation}`;
 }
 
 updateSummary();
