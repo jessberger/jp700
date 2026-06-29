@@ -18,6 +18,11 @@
   </header>
 
   <main id="dataInputPage" class="container page-container">
+    <aside id="dataInputFormulaNote" class="calculation-note">
+      <h3>Calculations</h3>
+      <p>1 l/min = 60 l/h</p>
+      <p>1 m3/h = 1000 l/h</p>
+    </aside>
     <div class="top-selections">
       <section class="selection-block compact">
         <h2>ATEX Selection</h2>
@@ -152,6 +157,10 @@
   </section>
 
   <section id="rotationPage" class="container page-container hidden">
+    <aside id="rotationFormulaNote" class="calculation-note">
+      <h3>RPM Formula</h3>
+      <p>RPM = Flow rate (l/min) / (constant × eccentricity × rotor diameter × stator pitch) / 1000</p>
+    </aside>
     <div class="page-actions">
       <button id="backToFluidBtn" class="nav-btn" type="button">Back</button>
       <button id="resetFromRotationBtn" class="nav-btn" type="button">Start Over</button>
@@ -244,6 +253,7 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 

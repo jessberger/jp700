@@ -936,3 +936,42 @@ body {
   font-size: 14px;
   font-weight: 650;
 }
+
+.calculation-note {
+  position: absolute;
+  right: calc(100% + 24px);
+  top: 0;
+  width: 210px;
+  padding: 14px 15px;
+  background: #ffffff;
+  border: 1px solid var(--border, #d9e1ea);
+  border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(16, 32, 51, 0.06);
+  color: var(--muted, #607188);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.calculation-note h3 {
+  margin: 0 0 9px;
+  color: var(--text, #102033);
+  font-size: 12px;
+  font-weight: 760;
+  text-transform: uppercase;
+}
+
+.calculation-note p {
+  margin: 0 0 7px;
+}
+
+.page-container {
+  position: relative;
+}
+
+@media (max-width: 1320px) {
+  .calculation-note {
+    position: static;
+    width: auto;
+    margin-bottom: 14px;
+  }
+}
