@@ -374,7 +374,7 @@
     </div>
   </section>
 
-  <section id="pumpDetailPage" class="container page-container hidden">
+  <section id="pumpFamilyPage" class="container page-container hidden">
     <div class="page-flow-header">
       <div class="step-bar compact-step">
         <span>Data Input</span>
@@ -383,49 +383,35 @@
         <span class="step-arrow">&rsaquo;</span>
         <span>Rotation Speeds</span>
         <span class="step-arrow">&rsaquo;</span>
-        <span class="active-step">Pump Details</span>
+        <span class="active-step">Pump Family</span>
       </div>
       <div class="page-actions">
         <button id="backToRotationBtn" class="nav-btn" type="button">Back</button>
-        <button id="resetFromDetailBtn" class="nav-btn" type="button">Start Over</button>
+        <button id="resetFromFamilyBtn" class="nav-btn" type="button">Start Over</button>
       </div>
     </div>
 
-    <section id="pumpDetailLayout" class="pump-detail-layout">
-      <div class="pump-image-panel">
-        <img id="pumpDetailImage" src="" alt="Selected pump" />
-        <div id="pumpImageFallback" class="pump-image-fallback hidden">Image not found</div>
+    <section class="family-selection-panel">
+      <div class="family-selection-header">
+        <h2>Pump Family</h2>
+        <p id="pumpFamilyContext">Select a pump family for the selected pump.</p>
       </div>
 
-      <div class="pump-info-panel">
-        <h2 id="pumpDetailTitle">Pump Details</h2>
-        <dl class="pump-info-list">
-          <div>
-            <dt>Pump Code</dt>
-            <dd id="detailPumpCode">-</dd>
-          </div>
-          <div>
-            <dt>Flow Rate</dt>
-            <dd id="detailFlowRate">-</dd>
-          </div>
-          <div>
-            <dt>Pressure</dt>
-            <dd id="detailPressure">-</dd>
-          </div>
-          <div>
-            <dt>Selection</dt>
-            <dd id="detailSelection">-</dd>
-          </div>
-          <div>
-            <dt>Orientation</dt>
-            <dd id="detailOrientation">-</dd>
-          </div>
-        </dl>
+      <div class="pump-family-grid" id="pumpFamilyGrid">
+        <button class="pump-family-btn" type="button" data-family="JP-700.">JP-700.</button>
+        <button class="pump-family-btn" type="button" data-family="JP-700H.">JP-700H.</button>
+        <button class="pump-family-btn" type="button" data-family="JP-700HL.">JP-700HL.</button>
+        <button class="pump-family-btn" type="button" data-family="JP-700L.">JP-700L.</button>
+        <button class="pump-family-btn" type="button" data-family="JP-700X.">JP-700X.</button>
+        <button class="pump-family-btn" type="button" data-family="JP-700XL.">JP-700XL.</button>
+        <button class="pump-family-btn" type="button" data-family="JP-L">JP-L</button>
+        <button class="pump-family-btn" type="button" data-family="JP-S">JP-S</button>
+        <button class="pump-family-btn" type="button" data-family="JP-SO">JP-SO</button>
+        <button class="pump-family-btn" type="button" data-family="JP-">JP-</button>
       </div>
     </section>
   </section>
-
-  <script src="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     window.SUPABASE_URL = "https://zglsynbyeldfbsmyrlpi.supabase.co";
@@ -434,6 +420,7 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 

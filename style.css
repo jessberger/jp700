@@ -1168,3 +1168,68 @@ body {
 .rpm-table th:first-child {
   white-space: nowrap;
 }
+
+.family-selection-panel {
+  background: #ffffff;
+  border: 1px solid var(--border, #d9e1ea);
+  border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(16, 32, 51, 0.06);
+  padding: 22px;
+}
+
+.family-selection-header h2 {
+  margin: 0 0 6px;
+  color: var(--text, #102033);
+  font-size: 22px;
+  font-weight: 760;
+}
+
+.family-selection-header p {
+  margin: 0 0 18px;
+  color: var(--muted, #607188);
+  font-size: 13px;
+}
+
+.pump-family-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pump-family-btn {
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #d9e1ea);
+  border-radius: 7px;
+  background: #ffffff;
+  color: var(--text, #102033);
+  font-size: 14px;
+  font-weight: 760;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.pump-family-btn:hover:not(:disabled) {
+  border-color: var(--accent, #0053a6);
+  background: #edf5ff;
+}
+
+.pump-family-btn.active {
+  border-color: var(--accent, #0053a6);
+  background: var(--accent, #0053a6);
+  color: #ffffff;
+}
+
+.pump-family-btn:disabled,
+.pump-family-btn.disabled {
+  background: #eef1f5;
+  color: #9aa8b7;
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+@media (max-width: 760px) {
+  .pump-family-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

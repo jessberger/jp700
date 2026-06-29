@@ -19,16 +19,10 @@ const backToFluidBtn = document.getElementById("backToFluidBtn");
 const backToRotationBtn = document.getElementById("backToRotationBtn");
 const resetButtons = document.querySelectorAll("[id^='resetFrom']");
 const rotationPage = document.getElementById("rotationPage");
-const pumpDetailPage = document.getElementById("pumpDetailPage");
-const pumpDetailLayout = document.getElementById("pumpDetailLayout");
-const pumpDetailImage = document.getElementById("pumpDetailImage");
-const pumpImageFallback = document.getElementById("pumpImageFallback");
-const pumpDetailTitle = document.getElementById("pumpDetailTitle");
-const detailPumpCode = document.getElementById("detailPumpCode");
-const detailFlowRate = document.getElementById("detailFlowRate");
-const detailPressure = document.getElementById("detailPressure");
-const detailSelection = document.getElementById("detailSelection");
-const detailOrientation = document.getElementById("detailOrientation");
+const pumpDetailPage = document.getElementById("pumpFamilyPage");
+const pumpFamilyContext = document.getElementById("pumpFamilyContext");
+const pumpFamilyButtons = document.querySelectorAll(".pump-family-btn");
+let selectedPumpModel = "";
 const rpmTableBody = document.getElementById("rpmTableBody");
 const rpmStatus = document.getElementById("rpmStatus");
 
@@ -426,16 +420,64 @@ function formatPumpDisplayName(model) {
 }
 
 function showPumpDetails(model) {
-  pumpDetailTitle.textContent = model;
-  detailPumpCode.textContent = model;
-  detailFlowRate.textContent = getFlowRateSummary();
-  detailPressure.textContent = `${pressureValue.value || 0} bar`;
-  detailSelection.textContent = getSelectionLabel();
-  detailOrientation.textContent = selections.orientation;
-
-  updatePumpDetailImage(model);
+  selectedPumpModel = model;
+  updatePumpFamilyOptions();
   showPumpDetailPage();
 }
+
+function updatePumpFamilyOptions() {
+  const allowedFamilies = getAllowedPumpFamilies();
+  const allowedSet = new Set(allowedFamilies);
+  let firstEnabledButton = null;
+
+  pumpFamilyContext.textContent = `Selected pump: ${formatPumpDisplayName(selectedPumpModel)} | ${getSelectionLabel()} | ${selections.orientation}`;
+
+  pumpFamilyButtons.forEach(button => {
+    const isAllowed = allowedSet.has(button.dataset.family);
+
+    button.disabled = !isAllowed;
+    button.classList.toggle("disabled", !isAllowed);
+    button.classList.remove("active");
+
+    if (isAllowed && !firstEnabledButton) {
+      firstEnabledButton = button;
+    }
+  });
+
+  if (firstEnabledButton) {
+    firstEnabledButton.classList.add("active");
+  }
+}
+
+function getAllowedPumpFamilies() {
+  if (selections.atex === "ATEX" && selections.food === "Food") {
+    return ["JP-700XL."];
+  }
+
+  if (selections.atex === "ATEX") {
+    return ["JP-700X."];
+  }
+
+  const orientationFamilies = selections.orientation === "Vertical"
+    ? ["JP-700.", "JP-700L.", "JP-700X."]
+    : ["JP-", "JP-700.", "JP-700H.", "JP-700HL.", "JP-700L.", "JP-700X.", "JP-700XL.", "JP-L", "JP-S", "JP-SO"];
+
+  if (selections.food === "Food") {
+    const foodFamilies = new Set(["JP-700HL.", "JP-700L.", "JP-L"]);
+    return orientationFamilies.filter(family => foodFamilies.has(family));
+  }
+
+  return orientationFamilies;
+}
+
+pumpFamilyButtons.forEach(button => {
+  button.addEventListener("click", () => {
+    if (button.disabled) return;
+
+    pumpFamilyButtons.forEach(item => item.classList.remove("active"));
+    button.classList.add("active");
+  });
+});
 
 function getFlowRateSummary() {
   const parts = [];
@@ -462,49 +504,6 @@ function getSelectionLabel() {
 
   return base;
 }
-
-function updatePumpDetailImage(model) {
-  const orientationFolder = selections.orientation === "Horizontal" ? "horizontal" : "vertical";
-  const imageNames = getPumpImageNames(model);
-  const imagePaths = imageNames.flatMap(name => [
-    `images/pump_pictures/${orientationFolder}/${name}.jpg`,
-    `images/pump_pictures/${orientationFolder}/${name}.jpeg`,
-    `images/pump_pictures/${orientationFolder}/${name}.png`,
-    `images/pump_pictures/${orientationFolder}/${name}.webp`
-  ]);
-
-  pumpDetailLayout.classList.toggle("horizontal-pump", selections.orientation === "Horizontal");
-  pumpDetailLayout.classList.toggle("vertical-pump", selections.orientation !== "Horizontal");
-  pumpImageFallback.classList.add("hidden");
-  pumpDetailImage.classList.remove("hidden");
-
-  tryPumpImagePath(imagePaths, 0);
-}
-
-function getPumpImageNames(model) {
-  const clean = String(model).trim();
-  const lower = clean.toLowerCase();
-  const underscored = lower.replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-  const dashed = lower.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  const compact = lower.replace(/[^a-z0-9]+/g, "");
-
-  return Array.from(new Set([clean, lower, underscored, dashed, compact]));
-}
-
-function tryPumpImagePath(paths, index) {
-  if (index >= paths.length) {
-    pumpDetailImage.classList.add("hidden");
-    pumpImageFallback.classList.remove("hidden");
-    return;
-  }
-
-  pumpDetailImage.onerror = () => tryPumpImagePath(paths, index + 1);
-  pumpDetailImage.onload = () => {
-    pumpDetailImage.onerror = null;
-  };
-  pumpDetailImage.src = `${paths[index]}?v=${IMAGE_CACHE_VERSION}`;
-}
-
 function indexRowsBySelectionKey(rows) {
   return new Map(rows.map(row => [String(row.selection_key).trim(), row]));
 }
@@ -627,6 +626,7 @@ function setStatus(message, isError = false) {
   rpmStatus.textContent = message;
   rpmStatus.classList.toggle("error", isError);
 }
+
 
 
 
