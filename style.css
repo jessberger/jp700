@@ -1,4 +1,4 @@
-* {
+﻿* {
   box-sizing: border-box;
 }
 
@@ -38,7 +38,7 @@ body {
 }
 
 .container {
-  max-width: 720px;
+  max-width: 900px;
   margin: 38px auto;
   padding: 0 20px;
 }
@@ -515,7 +515,11 @@ body {
 }
 
 #rotationPage {
-  max-width: 980px;
+  max-width: 1120px;
+}
+
+#pumpDetailPage {
+  max-width: 1040px;
 }
 
 .rpm-table-wrapper {
@@ -657,3 +661,4 @@ body {
 .pump-detail-layout.horizontal-pump #pumpDetailImage {
   max-height: 170px;
 }
+
