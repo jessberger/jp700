@@ -155,6 +155,30 @@
     <button id="showRotationBtn" class="calculate-btn">
       Calculate Rotation
     </button>
+    <div class="page-data-section">
+      <div class="page-data-divider"></div>
+      <p class="page-data-kicker">Data in this page</p>
+      <h2>Abrasivity and Viscosity values</h2>
+      <div id="fluidReferenceStatus" class="status-message" aria-live="polite"></div>
+      <div class="reference-table-wrapper">
+        <table class="reference-table">
+          <thead>
+            <tr>
+              <th>Pump Type</th>
+              <th>Abrasivity - group1</th>
+              <th>Abrasivity - group2</th>
+              <th>Abrasivity - group3</th>
+              <th>Abrasivity - group4</th>
+              <th>Viscosity - group1</th>
+              <th>Viscosity - group2</th>
+              <th>Viscosity - group3</th>
+              <th>Viscosity - group4</th>
+            </tr>
+          </thead>
+          <tbody id="fluidReferenceTableBody"></tbody>
+        </table>
+      </div>
+    </div>
   </section>
 
   <section id="rotationPage" class="container page-container hidden">
@@ -256,6 +280,7 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 

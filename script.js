@@ -31,6 +31,9 @@ const detailSelection = document.getElementById("detailSelection");
 const detailOrientation = document.getElementById("detailOrientation");
 const rpmTableBody = document.getElementById("rpmTableBody");
 const rpmStatus = document.getElementById("rpmStatus");
+const fluidReferenceTableBody = document.getElementById("fluidReferenceTableBody");
+const fluidReferenceStatus = document.getElementById("fluidReferenceStatus");
+let fluidReferenceLoaded = false;
 
 buttons.forEach(button => {
   button.addEventListener("click", () => {
@@ -283,6 +286,7 @@ function showFluidPage() {
   fluidPage.classList.remove("hidden");
   rotationPage.classList.add("hidden");
   pumpDetailPage.classList.add("hidden");
+  loadFluidReferenceData();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -617,8 +621,59 @@ function formatResultValue(value) {
   return String(Math.round(value * 1000) / 1000).replace(".", ",");
 }
 
+async function loadFluidReferenceData() {
+  if (fluidReferenceLoaded || !fluidReferenceTableBody) return;
+
+  fluidReferenceStatus.textContent = "Loading reference data...";
+  fluidReferenceStatus.classList.remove("error");
+
+  try {
+    const [abrasivityRows, viscosityRows] = await Promise.all([
+      fetchPropertyRows("abresivitat"),
+      fetchPropertyRows("viskositat")
+    ]);
+
+    renderFluidReferenceTable(abrasivityRows, viscosityRows);
+    fluidReferenceLoaded = true;
+    fluidReferenceStatus.textContent = "";
+  } catch (error) {
+    fluidReferenceStatus.textContent = error.message || "Reference data could not be loaded.";
+    fluidReferenceStatus.classList.add("error");
+  }
+}
+
+function renderFluidReferenceTable(abrasivityRows, viscosityRows) {
+  const viscosityByKey = indexRowsBySelectionKey(viscosityRows);
+
+  fluidReferenceTableBody.innerHTML = "";
+
+  abrasivityRows.forEach(abrasivityRow => {
+    const viscosityRow = viscosityByKey.get(String(abrasivityRow.selection_key).trim());
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${abrasivityRow.selection_key}</td>
+      <td>${formatReferenceValue(abrasivityRow.group1)}</td>
+      <td>${formatReferenceValue(abrasivityRow.group2)}</td>
+      <td>${formatReferenceValue(abrasivityRow.group3)}</td>
+      <td>${formatReferenceValue(abrasivityRow.group4)}</td>
+      <td>${formatReferenceValue(viscosityRow?.group1)}</td>
+      <td>${formatReferenceValue(viscosityRow?.group2)}</td>
+      <td>${formatReferenceValue(viscosityRow?.group3)}</td>
+      <td>${formatReferenceValue(viscosityRow?.group4)}</td>
+    `;
+
+    fluidReferenceTableBody.appendChild(row);
+  });
+}
+
+function formatReferenceValue(value) {
+  return value === undefined || value === null ? "-" : value;
+}
 function setStatus(message, isError = false) {
   rpmStatus.textContent = message;
   rpmStatus.classList.toggle("error", isError);
 }
+
+
 
