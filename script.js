@@ -1,4 +1,4 @@
-const SUPABASE_URL = window.SUPABASE_URL || "";
+﻿const SUPABASE_URL = window.SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "";
 const IMAGE_CACHE_VERSION = "pump-images-2026-06-26-2";
 
@@ -246,13 +246,14 @@ showRotationBtn.addEventListener("click", async () => {
   setStatus("Loading calculation data...");
 
   try {
-    const [coefficients, abrasivityRows, viscosityRows] = await Promise.all([
+    const [coefficients, abrasivityRows, viscosityRows, efficiencyRows] = await Promise.all([
       fetchCoefficients(),
       fetchPropertyRows("abresivitat"),
-      fetchPropertyRows("viskositat")
+      fetchPropertyRows("viskositat"),
+      fetchEfficiencyRows()
     ]);
 
-    renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosityRows);
+    renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosityRows, efficiencyRows);
     setStatus("");
   } catch (error) {
     rpmTableBody.innerHTML = "";
@@ -345,21 +346,39 @@ async function fetchPropertyRows(tableName) {
   return data;
 }
 
-function renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosityRows) {
+async function fetchEfficiencyRows() {
+  const supabaseClient = getSupabaseClient();
+  const { data, error } = await supabaseClient
+    .from("efficiency")
+    .select("model, pressure_step, efficiency");
+
+  if (error) throw error;
+  if (!data || data.length === 0) {
+    throw new Error("No efficiency data found.");
+  }
+
+  return data;
+}
+
+function renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosityRows, efficiencyRows) {
   rpmTableBody.innerHTML = "";
 
   const abrasivityByModel = indexRowsBySelectionKey(abrasivityRows);
   const viscosityByModel = indexRowsBySelectionKey(viscosityRows);
+  const efficiencyByModelAndPressure = indexEfficiencyRows(efficiencyRows);
+  const pressureStep = getSelectedPressureStep();
   const abrasivityGroup = getSelectedGroupNumber(fluidSelections.abrasivity);
   const viscosityGroup = getSelectedGroupNumber(fluidSelections.viscosity);
 
   coefficients.forEach(coefficient => {
+    const efficiency = getEfficiencyValue(efficiencyByModelAndPressure, coefficient.model, pressureStep);
     const rpm =
       qLiterMin *
       (1 / Number(coefficient.constant)) *
       (1 / Number(coefficient.eccentricity)) *
       (1 / Number(coefficient.rotor_diameter)) *
-      (1 / Number(coefficient.stator_pitch)) /
+      (1 / Number(coefficient.stator_pitch)) *
+      (1 / efficiency) /
       1000;
 
     const roundedRpm = Math.round(rpm);
@@ -484,6 +503,30 @@ function indexRowsBySelectionKey(rows) {
   return new Map(rows.map(row => [String(row.selection_key).trim(), row]));
 }
 
+function indexEfficiencyRows(rows) {
+  return new Map(
+    rows.map(row => [getEfficiencyKey(row.model, row.pressure_step), Number(row.efficiency)])
+  );
+}
+
+function getEfficiencyKey(model, pressureStep) {
+  return `${String(model).trim()}__${Number(pressureStep)}`;
+}
+
+function getSelectedPressureStep() {
+  return Math.round(Number(pressureValue.value) || 0);
+}
+
+function getEfficiencyValue(efficiencyByModelAndPressure, model, pressureStep) {
+  const efficiency = efficiencyByModelAndPressure.get(getEfficiencyKey(model, pressureStep));
+
+  if (!Number.isFinite(efficiency) || efficiency === 0) {
+    throw new Error(`No efficiency value found for ${model} at ${pressureStep} bar.`);
+  }
+
+  return efficiency;
+}
+
 function getSelectedGroupNumber(value) {
   const groups = {
     group1: 1,
@@ -578,3 +621,4 @@ function setStatus(message, isError = false) {
   rpmStatus.textContent = message;
   rpmStatus.classList.toggle("error", isError);
 }
+
