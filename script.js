@@ -399,7 +399,7 @@ function renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosity
     row.setAttribute("aria-label", `Select ${coefficient.model}`);
 
     row.innerHTML = `
-      <td>${coefficient.model}</td>
+      <td>${formatPumpDisplayName(coefficient.model)}</td>
       <td>${roundedRpm}</td>
       <td class="${abrasivityIsLower ? "lower-value" : ""}">${formatResultValue(abrasivityValue)}</td>
       <td class="${viscosityIsLower ? "lower-value" : ""}">${formatResultValue(viscosityValue)}</td>
@@ -417,6 +417,12 @@ function renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosity
 
     rpmTableBody.appendChild(row);
   });
+}
+
+function formatPumpDisplayName(model) {
+  return String(model)
+    .replace("JP-700.", "")
+    .replace("JP-", "");
 }
 
 function showPumpDetails(model) {
@@ -621,6 +627,7 @@ function setStatus(message, isError = false) {
   rpmStatus.textContent = message;
   rpmStatus.classList.toggle("error", isError);
 }
+
 
 
 
