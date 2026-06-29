@@ -92,12 +92,18 @@
   </main>
 
   <section id="fluidPage" class="container page-container hidden">
-    <div class="step-bar compact-step">
-      <span>Data Input</span>
-      <span class="step-arrow">&rsaquo;</span>
-      <span class="active-step">Fluid Properties</span>
-      <span class="step-arrow">&rsaquo;</span>
-      <span>Rotation Speeds</span>
+    <div class="page-flow-header">
+      <div class="step-bar compact-step">
+        <span>Data Input</span>
+        <span class="step-arrow">&rsaquo;</span>
+        <span class="active-step">Fluid Properties</span>
+        <span class="step-arrow">&rsaquo;</span>
+        <span>Rotation Speeds</span>
+      </div>
+      <div class="page-actions">
+        <button id="backToDataBtn" class="nav-btn" type="button">Back</button>
+        <button id="resetFromFluidBtn" class="nav-btn" type="button">Start Over</button>
+      </div>
     </div>
 
     <div class="fluid-grid">
@@ -146,11 +152,6 @@
       </section>
     </div>
 
-    <div class="page-actions">
-      <button id="backToDataBtn" class="nav-btn" type="button">Back</button>
-      <button id="resetFromFluidBtn" class="nav-btn" type="button">Start Over</button>
-    </div>
-
     <button id="showRotationBtn" class="calculate-btn">
       Calculate Rotation
     </button>
@@ -161,17 +162,18 @@
       <h3>RPM Formula</h3>
       <p>RPM = Flow rate (l/min) / (constant × eccentricity × rotor diameter × stator pitch × efficiency) / 1000</p>
     </aside>
-    <div class="page-actions">
-      <button id="backToFluidBtn" class="nav-btn" type="button">Back</button>
-      <button id="resetFromRotationBtn" class="nav-btn" type="button">Start Over</button>
-    </div>
-
-    <div class="step-bar compact-step">
-      <span>Data Input</span>
-      <span class="step-arrow">&rsaquo;</span>
-      <span>Fluid Properties</span>
-      <span class="step-arrow">&rsaquo;</span>
-      <span class="active-step">Rotation Speeds</span>
+    <div class="page-flow-header">
+      <div class="step-bar compact-step">
+        <span>Data Input</span>
+        <span class="step-arrow">&rsaquo;</span>
+        <span>Fluid Properties</span>
+        <span class="step-arrow">&rsaquo;</span>
+        <span class="active-step">Rotation Speeds</span>
+      </div>
+      <div class="page-actions">
+        <button id="backToFluidBtn" class="nav-btn" type="button">Back</button>
+        <button id="resetFromRotationBtn" class="nav-btn" type="button">Start Over</button>
+      </div>
     </div>
 
     <h2>Rotation Speeds</h2>
@@ -195,19 +197,20 @@
   </section>
 
   <section id="pumpDetailPage" class="container page-container hidden">
-    <div class="page-actions">
-      <button id="backToRotationBtn" class="nav-btn" type="button">Back</button>
-      <button id="resetFromDetailBtn" class="nav-btn" type="button">Start Over</button>
-    </div>
-
-    <div class="step-bar compact-step">
-      <span>Data Input</span>
-      <span class="step-arrow">&rsaquo;</span>
-      <span>Fluid Properties</span>
-      <span class="step-arrow">&rsaquo;</span>
-      <span>Rotation Speeds</span>
-      <span class="step-arrow">&rsaquo;</span>
-      <span class="active-step">Pump Details</span>
+    <div class="page-flow-header">
+      <div class="step-bar compact-step">
+        <span>Data Input</span>
+        <span class="step-arrow">&rsaquo;</span>
+        <span>Fluid Properties</span>
+        <span class="step-arrow">&rsaquo;</span>
+        <span>Rotation Speeds</span>
+        <span class="step-arrow">&rsaquo;</span>
+        <span class="active-step">Pump Details</span>
+      </div>
+      <div class="page-actions">
+        <button id="backToRotationBtn" class="nav-btn" type="button">Back</button>
+        <button id="resetFromDetailBtn" class="nav-btn" type="button">Start Over</button>
+      </div>
     </div>
 
     <section id="pumpDetailLayout" class="pump-detail-layout">
@@ -253,6 +256,7 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 

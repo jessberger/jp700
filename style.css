@@ -975,3 +975,45 @@ body {
     margin-bottom: 14px;
   }
 }
+
+.page-flow-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 8px 10px;
+  background: #ffffff;
+  border: 1px solid var(--border, #d9e1ea);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(16, 32, 51, 0.05);
+}
+
+.page-flow-header .compact-step {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  text-align: left;
+}
+
+.page-flow-header .page-actions {
+  margin: 0;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.page-flow-header .nav-btn {
+  padding: 6px 10px;
+}
+
+@media (max-width: 760px) {
+  .page-flow-header {
+    grid-template-columns: 1fr;
+  }
+
+  .page-flow-header .page-actions {
+    justify-content: flex-start;
+  }
+}
