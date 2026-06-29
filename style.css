@@ -1243,3 +1243,10 @@ body {
   font-weight: 800;
 }
 
+
+.fluid-reference-table th:nth-child(2),
+.fluid-reference-table td:nth-child(2),
+.fluid-reference-table th:nth-child(6),
+.fluid-reference-table td:nth-child(6) {
+  border-left: 2px solid #20364d;
+}
