@@ -449,25 +449,33 @@ function updatePumpFamilyOptions() {
   }
 }
 
+const pumpFamilyRules = [
+  { family: "JP-", orientation: "H", food: true, atex: true },
+  { family: "JP-700.", orientation: "V", food: false, atex: false },
+  { family: "JP-700H.", orientation: "H", food: false, atex: false },
+  { family: "JP-700HL.", orientation: "H", food: true, atex: false },
+  { family: "JP-700L.", orientation: "V", food: true, atex: false },
+  { family: "JP-700X.", orientation: "V", food: false, atex: true },
+  { family: "JP-700HX.", orientation: "H", food: false, atex: true },
+  { family: "JP-700XL.", orientation: "V", food: true, atex: true },
+  { family: "JP-700HXL.", orientation: "H", food: true, atex: true },
+  { family: "JP-L", orientation: "H", food: true, atex: true },
+  { family: "JP-S", orientation: "H", food: true, atex: true },
+  { family: "JP-SO", orientation: "H", food: true, atex: true }
+];
+
 function getAllowedPumpFamilies() {
-  if (selections.atex === "ATEX" && selections.food === "Food") {
-    return ["JP-700XL."];
-  }
+  const orientationCode = selections.orientation === "Vertical" ? "V" : "H";
+  const requiresFood = selections.food === "Food";
+  const requiresAtex = selections.atex === "ATEX";
 
-  if (selections.atex === "ATEX") {
-    return ["JP-700X."];
-  }
-
-  const orientationFamilies = selections.orientation === "Vertical"
-    ? ["JP-700.", "JP-700L.", "JP-700X."]
-    : ["JP-", "JP-700.", "JP-700H.", "JP-700HL.", "JP-700L.", "JP-700X.", "JP-700XL.", "JP-L", "JP-S", "JP-SO"];
-
-  if (selections.food === "Food") {
-    const foodFamilies = new Set(["JP-700HL.", "JP-700L.", "JP-L"]);
-    return orientationFamilies.filter(family => foodFamilies.has(family));
-  }
-
-  return orientationFamilies;
+  return pumpFamilyRules
+    .filter(rule =>
+      rule.orientation === orientationCode &&
+      rule.food === requiresFood &&
+      rule.atex === requiresAtex
+    )
+    .map(rule => rule.family);
 }
 
 pumpFamilyButtons.forEach(button => {
@@ -626,6 +634,7 @@ function setStatus(message, isError = false) {
   rpmStatus.textContent = message;
   rpmStatus.classList.toggle("error", isError);
 }
+
 
 
 
