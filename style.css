@@ -1126,3 +1126,45 @@ body {
 .rotation-reference-section {
   margin-top: 70px;
 }
+
+/* Rotation table column balance */
+.rpm-table {
+  table-layout: fixed;
+  min-width: 760px;
+}
+
+.rpm-table th,
+.rpm-table td {
+  padding: 7px 8px;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+}
+
+.rpm-table th:nth-child(1),
+.rpm-table td:nth-child(1) {
+  width: 13%;
+}
+
+.rpm-table th:nth-child(2),
+.rpm-table td:nth-child(2) {
+  width: 10%;
+}
+
+.rpm-table th:nth-child(3),
+.rpm-table td:nth-child(3),
+.rpm-table th:nth-child(4),
+.rpm-table td:nth-child(4) {
+  width: 15%;
+}
+
+.rpm-table th:nth-child(5),
+.rpm-table td:nth-child(5),
+.rpm-table th:nth-child(6),
+.rpm-table td:nth-child(6) {
+  width: 23.5%;
+}
+
+.rpm-table td:first-child,
+.rpm-table th:first-child {
+  white-space: nowrap;
+}
