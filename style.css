@@ -1233,3 +1233,13 @@ body {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.fluid-reference-table tr.pump-reference-row td {
+  background: #fff8d8;
+}
+
+.fluid-reference-table tr.pump-reference-row td:first-child {
+  color: #102033;
+  font-weight: 800;
+}
+
