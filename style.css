@@ -1055,7 +1055,7 @@ body {
 
 .reference-table {
   width: 100%;
-  min-width: 980px;
+  min-width: 0;
   border-collapse: collapse;
   font-size: 11px;
 }
@@ -1080,4 +1080,49 @@ body {
 .reference-table th:first-child {
   text-align: left;
   font-weight: 760;
+}
+
+.reference-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.reference-table th,
+.reference-table td {
+  padding: 5px 5px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.15;
+}
+
+.reference-table th {
+  font-size: 9px;
+}
+
+.reference-table td {
+  font-size: 10px;
+}
+
+.reference-table td:first-child,
+.reference-table th:first-child {
+  width: 92px;
+}
+
+.efficiency-reference-table th,
+.efficiency-reference-table td {
+  padding: 4px 3px;
+  font-size: 9px;
+}
+
+.efficiency-reference-table td:first-child,
+.efficiency-reference-table th:first-child {
+  width: 86px;
+}
+
+.reference-subtitle {
+  margin-top: 24px !important;
+}
+
+.rotation-reference-section {
+  margin-top: 70px;
 }
