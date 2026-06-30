@@ -170,6 +170,22 @@ let savedFluidReferenceRows = [];
 let fluidReferenceEditMode = false;
 let fluidReferenceColumns = { abrasivity: [], viscosity: [] };
 let fluidReferenceModelByDisplayName = new Map();
+const coefficientsTableBody = document.getElementById("coefficientsTableBody");
+const coefficientsEditBtn = document.getElementById("coefficientsEditBtn");
+const coefficientsSaveBtn = document.getElementById("coefficientsSaveBtn");
+const coefficientsCancelBtn = document.getElementById("coefficientsCancelBtn");
+const coefficientsStatus = document.getElementById("coefficientsStatus");
+const efficiencyTableBody = document.getElementById("efficiencyTableBody");
+const efficiencyEditBtn = document.getElementById("efficiencyEditBtn");
+const efficiencySaveBtn = document.getElementById("efficiencySaveBtn");
+const efficiencyCancelBtn = document.getElementById("efficiencyCancelBtn");
+const efficiencyStatus = document.getElementById("efficiencyStatus");
+let coefficientReferenceRows = [];
+let savedCoefficientReferenceRows = [];
+let coefficientsEditMode = false;
+let efficiencyReferenceRows = [];
+let savedEfficiencyReferenceRows = [];
+let efficiencyEditMode = false;
 
 buttons.forEach(button => {
   button.addEventListener("click", () => {
@@ -229,7 +245,241 @@ propertyOptions.forEach(option => {
 });
 
 initFluidReferenceEditor();
+initRotationReferenceEditors();
 
+
+function initRotationReferenceEditors() {
+  coefficientsEditBtn?.addEventListener("click", () => {
+    coefficientsEditMode = true;
+    setReferenceEditorStatus(coefficientsStatus, "Edit mode is active. Change coefficient values, then save.");
+    renderCoefficientReferenceRows();
+  });
+
+  coefficientsCancelBtn?.addEventListener("click", () => {
+    coefficientsEditMode = false;
+    coefficientReferenceRows = cloneCoefficientRows(savedCoefficientReferenceRows);
+    setReferenceEditorStatus(coefficientsStatus, "");
+    renderCoefficientReferenceRows();
+  });
+
+  coefficientsSaveBtn?.addEventListener("click", saveCoefficientReferenceRows);
+
+  efficiencyEditBtn?.addEventListener("click", () => {
+    efficiencyEditMode = true;
+    setReferenceEditorStatus(efficiencyStatus, "Edit mode is active. Values are shown as percent.");
+    renderEfficiencyReferenceRows();
+  });
+
+  efficiencyCancelBtn?.addEventListener("click", () => {
+    efficiencyEditMode = false;
+    efficiencyReferenceRows = cloneEfficiencyRows(savedEfficiencyReferenceRows);
+    setReferenceEditorStatus(efficiencyStatus, "");
+    renderEfficiencyReferenceRows();
+  });
+
+  efficiencySaveBtn?.addEventListener("click", saveEfficiencyReferenceRows);
+}
+
+function setRotationReferenceRows(coefficients, efficiencyRows) {
+  coefficientReferenceRows = coefficients.map(row => ({
+    model: String(row.model || "").trim(),
+    constant: Number(row.constant),
+    eccentricity: Number(row.eccentricity),
+    rotor_diameter: Number(row.rotor_diameter),
+    stator_pitch: Number(row.stator_pitch)
+  }));
+  savedCoefficientReferenceRows = cloneCoefficientRows(coefficientReferenceRows);
+
+  efficiencyReferenceRows = buildEfficiencyReferenceRows(coefficientReferenceRows, efficiencyRows);
+  savedEfficiencyReferenceRows = cloneEfficiencyRows(efficiencyReferenceRows);
+
+  renderCoefficientReferenceRows();
+  renderEfficiencyReferenceRows();
+  setReferenceEditorStatus(coefficientsStatus, "Values loaded from Supabase.");
+  setReferenceEditorStatus(efficiencyStatus, "Values loaded from Supabase.");
+}
+
+function renderCoefficientReferenceRows() {
+  if (!coefficientsTableBody || coefficientReferenceRows.length === 0) return;
+
+  coefficientsTableBody.innerHTML = "";
+  coefficientsEditBtn?.classList.toggle("hidden", coefficientsEditMode);
+  coefficientsSaveBtn?.classList.toggle("hidden", !coefficientsEditMode);
+  coefficientsCancelBtn?.classList.toggle("hidden", !coefficientsEditMode);
+
+  coefficientReferenceRows.forEach((row, rowIndex) => {
+    const tr = document.createElement("tr");
+    tr.className = "pump-reference-row";
+    tr.appendChild(createTextCell(formatPumpDisplayName(row.model)));
+    ["constant", "eccentricity", "rotor_diameter", "stator_pitch"].forEach(key => {
+      tr.appendChild(createEditableNumberCell(row, key, rowIndex, coefficientReferenceRows, coefficientsEditMode));
+    });
+    coefficientsTableBody.appendChild(tr);
+  });
+}
+
+function renderEfficiencyReferenceRows() {
+  if (!efficiencyTableBody || efficiencyReferenceRows.length === 0) return;
+
+  efficiencyTableBody.innerHTML = "";
+  efficiencyEditBtn?.classList.toggle("hidden", efficiencyEditMode);
+  efficiencySaveBtn?.classList.toggle("hidden", !efficiencyEditMode);
+  efficiencyCancelBtn?.classList.toggle("hidden", !efficiencyEditMode);
+
+  efficiencyReferenceRows.forEach((row, rowIndex) => {
+    const tr = document.createElement("tr");
+    tr.className = "pump-reference-row";
+    tr.appendChild(createTextCell(formatPumpDisplayName(row.model)));
+
+    row.values.forEach((value, pressureIndex) => {
+      const cell = document.createElement("td");
+
+      if (!efficiencyEditMode) {
+        cell.textContent = formatEfficiencyPercent(value);
+      } else {
+        const input = document.createElement("input");
+        input.type = "number";
+        input.step = "0.01";
+        input.value = value === null ? "" : String(Math.round(Number(value) * 10000) / 100);
+        input.addEventListener("input", () => {
+          efficiencyReferenceRows[rowIndex].values[pressureIndex] = parseEfficiencyInput(input.value);
+        });
+        cell.appendChild(input);
+      }
+
+      tr.appendChild(cell);
+    });
+
+    efficiencyTableBody.appendChild(tr);
+  });
+}
+
+function createTextCell(value) {
+  const cell = document.createElement("td");
+  cell.textContent = value;
+  return cell;
+}
+
+function createEditableNumberCell(row, key, rowIndex, rows, isEditing) {
+  const cell = document.createElement("td");
+
+  if (!isEditing) {
+    cell.textContent = formatReferenceValue(row[key]);
+    return cell;
+  }
+
+  const input = document.createElement("input");
+  input.type = "number";
+  input.step = "0.000001";
+  input.value = row[key] === null ? "" : String(row[key]);
+  input.addEventListener("input", () => {
+    rows[rowIndex][key] = parseReferenceNumber(input.value);
+  });
+  cell.appendChild(input);
+  return cell;
+}
+
+function buildEfficiencyReferenceRows(coefficients, efficiencyRows) {
+  const efficiencyByModelAndPressure = indexEfficiencyRows(efficiencyRows);
+
+  return coefficients.map(coefficient => ({
+    model: coefficient.model,
+    values: Array.from({ length: 25 }, (_, pressureStep) => {
+      const value = efficiencyByModelAndPressure.get(getEfficiencyKey(coefficient.model, pressureStep));
+      return Number.isFinite(value) ? value : null;
+    })
+  }));
+}
+
+async function saveCoefficientReferenceRows() {
+  setReferenceEditorStatus(coefficientsStatus, "Saving coefficients to Supabase...");
+  coefficientsSaveBtn.disabled = true;
+
+  try {
+    const supabaseClient = getSupabaseClient();
+    const payload = coefficientReferenceRows.map(row => ({
+      model: row.model,
+      constant: row.constant,
+      eccentricity: row.eccentricity,
+      rotor_diameter: row.rotor_diameter,
+      stator_pitch: row.stator_pitch
+    }));
+
+    const { error } = await supabaseClient
+      .from("coefficients")
+      .upsert(payload, { onConflict: "model" });
+
+    if (error) throw error;
+
+    coefficientsEditMode = false;
+    savedCoefficientReferenceRows = cloneCoefficientRows(coefficientReferenceRows);
+    renderCoefficientReferenceRows();
+    setReferenceEditorStatus(coefficientsStatus, "Coefficients saved. Recalculate to use updated values.");
+  } catch (error) {
+    setReferenceEditorStatus(coefficientsStatus, error.message || "Coefficients could not be saved.", true);
+  } finally {
+    coefficientsSaveBtn.disabled = false;
+  }
+}
+
+async function saveEfficiencyReferenceRows() {
+  setReferenceEditorStatus(efficiencyStatus, "Saving efficiency values to Supabase...");
+  efficiencySaveBtn.disabled = true;
+
+  try {
+    const supabaseClient = getSupabaseClient();
+    const payload = efficiencyReferenceRows.flatMap(row =>
+      row.values.map((value, pressureStep) => ({
+        model: row.model,
+        pressure_step: pressureStep,
+        efficiency: value
+      }))
+    );
+
+    const { error } = await supabaseClient
+      .from("efficiency")
+      .upsert(payload, { onConflict: "model,pressure_step" });
+
+    if (error) throw error;
+
+    efficiencyEditMode = false;
+    savedEfficiencyReferenceRows = cloneEfficiencyRows(efficiencyReferenceRows);
+    renderEfficiencyReferenceRows();
+    setReferenceEditorStatus(efficiencyStatus, "Efficiency values saved. Recalculate to use updated values.");
+  } catch (error) {
+    setReferenceEditorStatus(efficiencyStatus, error.message || "Efficiency values could not be saved.", true);
+  } finally {
+    efficiencySaveBtn.disabled = false;
+  }
+}
+
+function parseEfficiencyInput(value) {
+  const number = parseReferenceNumber(value);
+  if (number === null) return null;
+  return number > 1 ? number / 100 : number;
+}
+
+function formatEfficiencyPercent(value) {
+  if (value === null || value === undefined) return "-";
+  return "%" + String(Math.round(Number(value) * 10000) / 100).replace(".", ",");
+}
+
+function cloneCoefficientRows(rows) {
+  return rows.map(row => ({ ...row }));
+}
+
+function cloneEfficiencyRows(rows) {
+  return rows.map(row => ({
+    model: row.model,
+    values: [...row.values]
+  }));
+}
+
+function setReferenceEditorStatus(element, message, isError = false) {
+  if (!element) return;
+  element.textContent = message;
+  element.classList.toggle("error", isError);
+}
 
 function initFluidReferenceEditor() {
   if (!fluidReferenceTableBody) return;
@@ -840,6 +1090,7 @@ showRotationBtn.addEventListener("click", async () => {
       fetchFluidReferenceLayoutRows()
     ]);
 
+    setRotationReferenceRows(coefficients, efficiencyRows);
     renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosityRows, efficiencyRows, layoutRows);
     setStatus("");
   } catch (error) {

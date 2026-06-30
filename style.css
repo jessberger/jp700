@@ -1511,3 +1511,21 @@ body:not(.auth-locked) .auth-screen {
 .fluid-reference-table td:nth-child(2) {
   width: 140px;
 }
+
+
+.coefficients-reference-table input,
+.efficiency-reference-table input {
+  width: 100%;
+  min-width: 44px;
+  padding: 5px 3px;
+  border: 1px solid var(--border-strong, #9fb1c5);
+  border-radius: 5px;
+  color: var(--text, #102033);
+  font: inherit;
+  text-align: center;
+}
+
+.efficiency-reference-table input {
+  min-width: 38px;
+  font-size: 9px;
+}
