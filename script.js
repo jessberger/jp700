@@ -309,14 +309,13 @@ async function loadFluidReferenceRows() {
 }
 
 function buildFluidReferenceRows(abrasivityRows, viscosityRows) {
-  const abrasivityByDisplay = indexPropertyRowsByDisplayName(abrasivityRows);
-  const viscosityByDisplay = indexPropertyRowsByDisplayName(viscosityRows);
+  const abrasivityByOrder = indexPropertyRowsByOrder(abrasivityRows);
+  const viscosityByOrder = indexPropertyRowsByOrder(viscosityRows);
 
   return normalizeFluidReferenceRowCount(savedFluidReferenceRows).map(row => {
     const updatedRow = cloneFluidReferenceRows([row])[0];
-    const firstPump = updatedRow.pumps[0];
-    const abrasivityRow = abrasivityByDisplay.get(firstPump);
-    const viscosityRow = viscosityByDisplay.get(firstPump);
+    const abrasivityRow = abrasivityByOrder.get(updatedRow.order);
+    const viscosityRow = viscosityByOrder.get(updatedRow.order);
 
     if (abrasivityRow) {
       updatedRow.abrasivity = [1, 2, 3, 4].map(group => getGroupValue(abrasivityRow, group));
@@ -465,8 +464,8 @@ async function saveFluidReferenceRows() {
     }
 
     await Promise.all([
-      saveFluidReferenceTable("abresivitat", "abrasivity", assignedPumps),
-      saveFluidReferenceTable("viskositat", "viscosity", assignedPumps)
+      saveFluidReferenceTable("abresivitat", "abrasivity"),
+      saveFluidReferenceTable("viskositat", "viscosity")
     ]);
     await saveFluidReferenceLayout();
 
@@ -517,22 +516,24 @@ async function saveFluidReferenceLayout() {
   }
 }
 
-async function saveFluidReferenceTable(tableName, type, assignedPumps) {
+async function saveFluidReferenceTable(tableName, type) {
   const supabaseClient = getSupabaseClient();
   const columns = fluidReferenceColumns[type].length ? fluidReferenceColumns[type] : ["group_1", "group_2", "group_3", "group_4"];
 
-  for (const assignment of assignedPumps) {
-    const payload = {};
+  const payload = fluidReferenceRows.map(row => {
+    const values = { order_position: row.order, selection_key: String(row.order) };
     columns.forEach((column, index) => {
-      payload[column] = assignment.row[type][index];
+      values[column] = row[type][index];
     });
+    return values;
+  });
 
-    const { error } = await supabaseClient
-      .from(tableName)
-      .update(payload)
-      .eq("selection_key", assignment.model);
+  const { error } = await supabaseClient
+    .from(tableName)
+    .upsert(payload, { onConflict: "order_position" });
 
-    if (error) throw error;
+  if (error) {
+    throw new Error(tableName + " reference values could not be saved. Add order_position as a unique column first.");
   }
 }
 
@@ -831,14 +832,15 @@ showRotationBtn.addEventListener("click", async () => {
   setStatus("Loading calculation data...");
 
   try {
-    const [coefficients, abrasivityRows, viscosityRows, efficiencyRows] = await Promise.all([
+    const [coefficients, abrasivityRows, viscosityRows, efficiencyRows, layoutRows] = await Promise.all([
       fetchCoefficients(),
       fetchPropertyRows("abresivitat"),
       fetchPropertyRows("viskositat"),
-      fetchEfficiencyRows()
+      fetchEfficiencyRows(),
+      fetchFluidReferenceLayoutRows()
     ]);
 
-    renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosityRows, efficiencyRows);
+    renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosityRows, efficiencyRows, layoutRows);
     setStatus("");
   } catch (error) {
     rpmTableBody.innerHTML = "";
@@ -945,11 +947,12 @@ async function fetchEfficiencyRows() {
   return data;
 }
 
-function renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosityRows, efficiencyRows) {
+function renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosityRows, efficiencyRows, layoutRows) {
   rpmTableBody.innerHTML = "";
 
-  const abrasivityByModel = indexRowsBySelectionKey(abrasivityRows);
-  const viscosityByModel = indexRowsBySelectionKey(viscosityRows);
+  const pumpOrderByModel = indexFluidLayoutByModel(layoutRows, coefficients);
+  const abrasivityByOrder = indexPropertyRowsByOrder(abrasivityRows);
+  const viscosityByOrder = indexPropertyRowsByOrder(viscosityRows);
   const efficiencyByModelAndPressure = indexEfficiencyRows(efficiencyRows);
   const pressureStep = getSelectedPressureStep();
   const abrasivityGroup = getSelectedGroupNumber(fluidSelections.abrasivity);
@@ -967,8 +970,20 @@ function renderRotationSpeeds(coefficients, qLiterMin, abrasivityRows, viscosity
       1000;
 
     const roundedRpm = Math.round(rpm);
-    const abrasivityValue = getGroupValue(abrasivityByModel.get(coefficient.model), abrasivityGroup);
-    const viscosityValue = getGroupValue(viscosityByModel.get(coefficient.model), viscosityGroup);
+    const referenceOrder = pumpOrderByModel.get(coefficient.model);
+    if (!referenceOrder) {
+      throw new Error("No fluid reference order found for " + coefficient.model + ". Check fluid_reference_layout.");
+    }
+
+    const abrasivityRow = abrasivityByOrder.get(referenceOrder);
+    const viscosityRow = viscosityByOrder.get(referenceOrder);
+
+    if (!abrasivityRow || !viscosityRow) {
+      throw new Error("No abrasivity/viscosity values found for order " + referenceOrder + ". Add order_position to abresivitat and viskositat.");
+    }
+
+    const abrasivityValue = getGroupValue(abrasivityRow, abrasivityGroup);
+    const viscosityValue = getGroupValue(viscosityRow, viscosityGroup);
     const selectedPropertyValue = getLowerPropertyValue(abrasivityValue, viscosityValue);
     const calculationRange = getCalculationRange(selectedPropertyValue);
     const row = document.createElement("tr");
@@ -1103,6 +1118,52 @@ function getSelectionLabel() {
 
   return base;
 }
+async function fetchFluidReferenceLayoutRows() {
+  const supabaseClient = getSupabaseClient();
+  const { data, error } = await supabaseClient
+    .from(FLUID_REFERENCE_LAYOUT_TABLE)
+    .select("order_position, pumps");
+
+  if (error) throw error;
+  return data || [];
+}
+
+function indexFluidLayoutByModel(rows, coefficients) {
+  const orderByModel = new Map();
+  const modelByDisplayName = buildModelDisplayMap(coefficients);
+
+  rows.forEach(row => {
+    const order = Number(row.order_position);
+    if (!Number.isFinite(order)) return;
+
+    parsePumpList(row.pumps).forEach(pump => {
+      const model = modelByDisplayName.get(pump) || modelByDisplayName.get(formatPumpDisplayName(pump));
+      if (model) orderByModel.set(model, order);
+    });
+  });
+
+  return orderByModel;
+}
+
+function indexPropertyRowsByOrder(rows) {
+  const indexedRows = new Map();
+
+  rows.forEach(row => {
+    const order = getReferenceOrder(row);
+    if (Number.isFinite(order)) indexedRows.set(order, row);
+  });
+
+  return indexedRows;
+}
+
+function getReferenceOrder(row) {
+  const possibleColumns = ["order_position", "reference_order", "order", "sequence", "row_number"];
+  const matchingKey = Object.keys(row || {}).find(key => possibleColumns.includes(key.toLowerCase()));
+  const value = matchingKey ? Number(row[matchingKey]) : NaN;
+
+  return Number.isFinite(value) ? value : null;
+}
+
 function indexRowsBySelectionKey(rows) {
   return new Map(rows.map(row => [String(row.selection_key).trim(), row]));
 }
