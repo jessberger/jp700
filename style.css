@@ -1529,3 +1529,29 @@ body:not(.auth-locked) .auth-screen {
   min-width: 38px;
   font-size: 9px;
 }
+
+
+/* Larger editable rotation reference tables */
+.coefficients-reference-table th,
+.coefficients-reference-table td {
+  padding: 7px 7px;
+  font-size: 11px;
+}
+
+.efficiency-reference-table th,
+.efficiency-reference-table td {
+  padding: 5px 4px;
+  font-size: 10px;
+}
+
+.coefficients-reference-table input {
+  min-width: 62px;
+  padding: 7px 5px;
+  font-size: 11px;
+}
+
+.efficiency-reference-table input {
+  min-width: 44px;
+  padding: 6px 4px;
+  font-size: 10px;
+}

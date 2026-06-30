@@ -537,16 +537,17 @@ async function loadFluidReferenceRows() {
   setFluidReferenceStatus("Loading Supabase values...");
 
   try {
-    const [abrasivityRows, viscosityRows] = await Promise.all([
+    const [abrasivityRows, viscosityRows, coefficients] = await Promise.all([
       fetchPropertyRows("abresivitat"),
-      fetchPropertyRows("viskositat")
+      fetchPropertyRows("viskositat"),
+      fetchCoefficients()
     ]);
 
     fluidReferenceColumns = {
       abrasivity: getGroupColumnKeys(abrasivityRows),
       viscosity: getGroupColumnKeys(viscosityRows)
     };
-    fluidReferenceModelByDisplayName = buildModelDisplayMap(abrasivityRows, viscosityRows);
+    fluidReferenceModelByDisplayName = buildModelDisplayMap(coefficients);
     fluidReferenceRows = buildFluidReferenceRows(abrasivityRows, viscosityRows);
     await applySavedFluidReferenceLayout();
     savedFluidReferenceRows = cloneFluidReferenceRows(fluidReferenceRows);
