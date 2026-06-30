@@ -1,3 +1,135 @@
+const APP_PASSWORD_STORAGE_KEY = "jp700AppPasswordHash";
+const APP_AUTH_SESSION_KEY = "jp700AppAuthenticated";
+const PASSWORD_RESET_EMAIL = "n.alhas@jesspumpen.de";
+
+const authScreen = document.getElementById("authScreen");
+const authForm = document.getElementById("authForm");
+const authPassword = document.getElementById("authPassword");
+const authTitle = document.getElementById("authTitle");
+const authIntro = document.getElementById("authIntro");
+const authPasswordLabel = document.getElementById("authPasswordLabel");
+const authSubmitBtn = document.getElementById("authSubmitBtn");
+const authMessage = document.getElementById("authMessage");
+const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+const resetPasswordBtn = document.getElementById("resetPasswordBtn");
+let authMode = "login";
+
+initPasswordGate();
+
+function initPasswordGate() {
+  if (!authScreen || !authForm) return;
+
+  if (sessionStorage.getItem(APP_AUTH_SESSION_KEY) === "true" && localStorage.getItem(APP_PASSWORD_STORAGE_KEY)) {
+    unlockApp();
+    return;
+  }
+
+  if (!localStorage.getItem(APP_PASSWORD_STORAGE_KEY)) {
+    setAuthMode("create");
+  } else {
+    setAuthMode("login");
+  }
+
+  authPassword.focus();
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  authPassword.value = "";
+  setAuthMessage("");
+
+  if (mode === "create") {
+    authTitle.textContent = "Create Access Password";
+    authIntro.textContent = "Choose a 4-digit password for this browser.";
+    authPasswordLabel.textContent = "New password";
+    authSubmitBtn.textContent = "Save Password";
+    forgotPasswordBtn.classList.add("hidden");
+    resetPasswordBtn.classList.add("hidden");
+    authPassword.autocomplete = "new-password";
+    return;
+  }
+
+  if (mode === "reset") {
+    authTitle.textContent = "Reset Password";
+    authIntro.textContent = "Choose a new 4-digit password for this browser.";
+    authPasswordLabel.textContent = "New password";
+    authSubmitBtn.textContent = "Save New Password";
+    forgotPasswordBtn.classList.remove("hidden");
+    resetPasswordBtn.classList.add("hidden");
+    authPassword.autocomplete = "new-password";
+    return;
+  }
+
+  authTitle.textContent = "Pump Selector Access";
+  authIntro.textContent = "Enter the 4-digit password to open the system.";
+  authPasswordLabel.textContent = "Password";
+  authSubmitBtn.textContent = "Unlock";
+  forgotPasswordBtn.classList.remove("hidden");
+  resetPasswordBtn.classList.add("hidden");
+  authPassword.autocomplete = "current-password";
+}
+
+authForm?.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const password = authPassword.value.trim();
+
+  if (!/^\d{4}$/.test(password)) {
+    setAuthMessage("Please enter a 4-digit password.", true);
+    return;
+  }
+
+  if (authMode === "create" || authMode === "reset") {
+    localStorage.setItem(APP_PASSWORD_STORAGE_KEY, await hashPassword(password));
+    sessionStorage.setItem(APP_AUTH_SESSION_KEY, "true");
+    setAuthMessage("Password saved.", false, true);
+    unlockApp();
+    return;
+  }
+
+  const savedHash = localStorage.getItem(APP_PASSWORD_STORAGE_KEY);
+  const enteredHash = await hashPassword(password);
+
+  if (enteredHash !== savedHash) {
+    setAuthMessage("Password is incorrect.", true);
+    authPassword.select();
+    return;
+  }
+
+  sessionStorage.setItem(APP_AUTH_SESSION_KEY, "true");
+  unlockApp();
+});
+
+forgotPasswordBtn?.addEventListener("click", () => {
+  const subject = encodeURIComponent("JP700 password reset request");
+  const body = encodeURIComponent("Hello, I forgot the JP700 Pump Selector password. Please send me a new 4-digit password or reset instructions.");
+  window.location.href = "mailto:" + PASSWORD_RESET_EMAIL + "?subject=" + subject + "&body=" + body;
+  resetPasswordBtn.classList.remove("hidden");
+  setAuthMessage("A reset email draft was opened. After approval, use Set new password on this screen.");
+});
+
+resetPasswordBtn?.addEventListener("click", () => {
+  setAuthMode("reset");
+  authPassword.focus();
+});
+
+async function hashPassword(password) {
+  const bytes = new TextEncoder().encode("jp700:" + password);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function unlockApp() {
+  document.body.classList.remove("auth-locked");
+}
+
+function setAuthMessage(message, isError = false, isSuccess = false) {
+  if (!authMessage) return;
+  authMessage.textContent = message;
+  authMessage.classList.toggle("error", isError);
+  authMessage.classList.toggle("success", isSuccess);
+}
+
 ﻿const SUPABASE_URL = window.SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "";
 const IMAGE_CACHE_VERSION = "pump-images-2026-06-26-2";

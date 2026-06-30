@@ -8,7 +8,28 @@
   <link rel="icon" type="image/svg+xml" href="images/favicon.svg" />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="auth-locked">
+  <section id="authScreen" class="auth-screen" aria-labelledby="authTitle">
+    <div class="auth-panel">
+      <img src="images/logo.jpg" alt="Jessberger Logo" class="auth-logo" />
+      <p class="auth-kicker">Jessberger GmbH</p>
+      <h1 id="authTitle">Pump Selector Access</h1>
+      <p id="authIntro" class="auth-intro">Enter the 4-digit password to open the system.</p>
+
+      <form id="authForm" class="auth-form">
+        <label id="authPasswordLabel" for="authPassword">Password</label>
+        <input id="authPassword" type="password" inputmode="numeric" autocomplete="current-password" maxlength="4" pattern="[0-9]{4}" />
+        <button id="authSubmitBtn" class="calculate-btn" type="submit">Unlock</button>
+      </form>
+
+      <div id="authMessage" class="auth-message" aria-live="polite"></div>
+
+      <div class="auth-actions">
+        <button id="forgotPasswordBtn" type="button">Forgot password?</button>
+        <button id="resetPasswordBtn" type="button" class="hidden">Set new password</button>
+      </div>
+    </div>
+  </section>
   <header class="topbar">
     <div>
       <h1>Jessberger GmbH</h1>
