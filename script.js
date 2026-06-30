@@ -397,19 +397,22 @@ async function saveCoefficientReferenceRows() {
 
   try {
     const supabaseClient = getSupabaseClient();
-    const payload = coefficientReferenceRows.map(row => ({
-      model: row.model,
-      constant: row.constant,
-      eccentricity: row.eccentricity,
-      rotor_diameter: row.rotor_diameter,
-      stator_pitch: row.stator_pitch
-    }));
 
-    const { error } = await supabaseClient
-      .from("coefficients")
-      .upsert(payload, { onConflict: "model" });
+    for (const row of coefficientReferenceRows) {
+      const payload = {
+        constant: row.constant,
+        eccentricity: row.eccentricity,
+        rotor_diameter: row.rotor_diameter,
+        stator_pitch: row.stator_pitch
+      };
 
-    if (error) throw error;
+      const { error } = await supabaseClient
+        .from("coefficients")
+        .update(payload)
+        .eq("model", row.model);
+
+      if (error) throw error;
+    }
 
     coefficientsEditMode = false;
     savedCoefficientReferenceRows = cloneCoefficientRows(coefficientReferenceRows);
@@ -428,19 +431,18 @@ async function saveEfficiencyReferenceRows() {
 
   try {
     const supabaseClient = getSupabaseClient();
-    const payload = efficiencyReferenceRows.flatMap(row =>
-      row.values.map((value, pressureStep) => ({
-        model: row.model,
-        pressure_step: pressureStep,
-        efficiency: value
-      }))
-    );
 
-    const { error } = await supabaseClient
-      .from("efficiency")
-      .upsert(payload, { onConflict: "model,pressure_step" });
+    for (const row of efficiencyReferenceRows) {
+      for (const [pressureStep, value] of row.values.entries()) {
+        const { error } = await supabaseClient
+          .from("efficiency")
+          .update({ efficiency: value })
+          .eq("model", row.model)
+          .eq("pressure_step", pressureStep);
 
-    if (error) throw error;
+        if (error) throw error;
+      }
+    }
 
     efficiencyEditMode = false;
     savedEfficiencyReferenceRows = cloneEfficiencyRows(efficiencyReferenceRows);
@@ -771,20 +773,20 @@ async function saveFluidReferenceTable(tableName, type) {
   const supabaseClient = getSupabaseClient();
   const columns = fluidReferenceColumns[type].length ? fluidReferenceColumns[type] : ["group_1", "group_2", "group_3", "group_4"];
 
-  const payload = fluidReferenceRows.map(row => {
-    const values = { order_position: row.order, selection_key: String(row.order) };
+  for (const row of fluidReferenceRows) {
+    const payload = { order_position: row.order };
     columns.forEach((column, index) => {
-      values[column] = row[type][index];
+      payload[column] = row[type][index];
     });
-    return values;
-  });
 
-  const { error } = await supabaseClient
-    .from(tableName)
-    .upsert(payload, { onConflict: "order_position" });
+    const { error } = await supabaseClient
+      .from(tableName)
+      .update(payload)
+      .eq("selection_key", String(row.order));
 
-  if (error) {
-    throw new Error(tableName + " reference values could not be saved. Add order_position as a unique column first.");
+    if (error) {
+      throw new Error(tableName + " reference values could not be saved. Check update policy and numeric selection_key rows.");
+    }
   }
 }
 
