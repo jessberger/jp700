@@ -157,6 +157,15 @@ const pumpFamilyButtons = document.querySelectorAll(".pump-family-btn");
 let selectedPumpModel = "";
 const rpmTableBody = document.getElementById("rpmTableBody");
 const rpmStatus = document.getElementById("rpmStatus");
+const fluidReferenceTableBody = document.getElementById("fluidReferenceTableBody");
+const fluidReferenceEditBtn = document.getElementById("fluidReferenceEditBtn");
+const fluidReferenceSaveBtn = document.getElementById("fluidReferenceSaveBtn");
+const fluidReferenceCancelBtn = document.getElementById("fluidReferenceCancelBtn");
+const fluidReferenceStatus = document.getElementById("fluidReferenceStatus");
+let fluidReferenceRows = [];
+let savedFluidReferenceRows = [];
+let fluidReferenceEditMode = false;
+let fluidReferenceColumns = { abrasivity: [], viscosity: [] };
 
 buttons.forEach(button => {
   button.addEventListener("click", () => {
@@ -214,6 +223,282 @@ propertyOptions.forEach(option => {
     option.classList.add("active");
   });
 });
+
+initFluidReferenceEditor();
+
+
+function initFluidReferenceEditor() {
+  if (!fluidReferenceTableBody) return;
+
+  savedFluidReferenceRows = readFluidReferenceRowsFromTable();
+  fluidReferenceRows = cloneFluidReferenceRows(savedFluidReferenceRows);
+  loadFluidReferenceRows();
+
+  fluidReferenceEditBtn?.addEventListener("click", () => {
+    fluidReferenceEditMode = true;
+    setFluidReferenceStatus("Edit mode is active. Change values or move pump names, then save.");
+    renderFluidReferenceRows();
+  });
+
+  fluidReferenceCancelBtn?.addEventListener("click", () => {
+    fluidReferenceEditMode = false;
+    fluidReferenceRows = cloneFluidReferenceRows(savedFluidReferenceRows);
+    setFluidReferenceStatus("");
+    renderFluidReferenceRows();
+  });
+
+  fluidReferenceSaveBtn?.addEventListener("click", saveFluidReferenceRows);
+
+  fluidReferenceTableBody.addEventListener("click", event => {
+    const moveButton = event.target.closest("[data-fluid-move]");
+    if (!moveButton || !fluidReferenceEditMode) return;
+
+    const rowIndex = Number(moveButton.dataset.index);
+    const direction = Number(moveButton.dataset.fluidMove);
+    moveFluidReferencePump(rowIndex, direction);
+  });
+}
+
+function readFluidReferenceRowsFromTable() {
+  return Array.from(fluidReferenceTableBody.querySelectorAll("tr")).map(row => {
+    const cells = Array.from(row.querySelectorAll("td"));
+
+    return {
+      model: cells[0]?.textContent.trim() || "",
+      displayName: cells[0]?.textContent.trim() || "",
+      isPump: row.classList.contains("pump-reference-row"),
+      abrasivity: cells.slice(1, 5).map(cell => parseReferenceNumber(cell.textContent)),
+      viscosity: cells.slice(5, 9).map(cell => parseReferenceNumber(cell.textContent))
+    };
+  }).filter(row => row.model);
+}
+
+async function loadFluidReferenceRows() {
+  setFluidReferenceStatus("Loading Supabase values...");
+
+  try {
+    const [abrasivityRows, viscosityRows] = await Promise.all([
+      fetchPropertyRows("abresivitat"),
+      fetchPropertyRows("viskositat")
+    ]);
+
+    fluidReferenceColumns = {
+      abrasivity: getGroupColumnKeys(abrasivityRows),
+      viscosity: getGroupColumnKeys(viscosityRows)
+    };
+    fluidReferenceRows = buildFluidReferenceRows(abrasivityRows, viscosityRows);
+    savedFluidReferenceRows = cloneFluidReferenceRows(fluidReferenceRows);
+    renderFluidReferenceRows();
+    setFluidReferenceStatus("Values loaded from Supabase.");
+  } catch (error) {
+    renderFluidReferenceRows();
+    setFluidReferenceStatus("Supabase values could not be loaded. Static table is shown.", true);
+  }
+}
+
+function buildFluidReferenceRows(abrasivityRows, viscosityRows) {
+  const viscosityByModel = indexRowsBySelectionKey(viscosityRows);
+  const staticRowsByDisplay = new Map(savedFluidReferenceRows.map(row => [row.displayName, row]));
+
+  return abrasivityRows.map(row => {
+    const model = String(row.selection_key || row.model || "").trim();
+    const displayName = formatPumpDisplayName(model);
+    const staticRow = staticRowsByDisplay.get(displayName);
+    const viscosityRow = viscosityByModel.get(model);
+
+    return {
+      model,
+      displayName,
+      isPump: Boolean(staticRow?.isPump),
+      abrasivity: [1, 2, 3, 4].map(group => getGroupValue(row, group)),
+      viscosity: [1, 2, 3, 4].map(group => getGroupValue(viscosityRow, group))
+    };
+  });
+}
+
+function renderFluidReferenceRows() {
+  if (!fluidReferenceTableBody) return;
+
+  fluidReferenceTableBody.innerHTML = "";
+  fluidReferenceTableBody.classList.toggle("is-editing", fluidReferenceEditMode);
+  fluidReferenceEditBtn?.classList.toggle("hidden", fluidReferenceEditMode);
+  fluidReferenceSaveBtn?.classList.toggle("hidden", !fluidReferenceEditMode);
+  fluidReferenceCancelBtn?.classList.toggle("hidden", !fluidReferenceEditMode);
+
+  fluidReferenceRows.forEach((row, rowIndex) => {
+    const tr = document.createElement("tr");
+    tr.classList.toggle("pump-reference-row", row.isPump);
+
+    tr.appendChild(createFluidReferenceModelCell(row, rowIndex));
+    row.abrasivity.forEach((value, groupIndex) => {
+      tr.appendChild(createFluidReferenceValueCell(value, "abrasivity", groupIndex));
+    });
+    row.viscosity.forEach((value, groupIndex) => {
+      tr.appendChild(createFluidReferenceValueCell(value, "viscosity", groupIndex));
+    });
+
+    fluidReferenceTableBody.appendChild(tr);
+  });
+}
+
+function createFluidReferenceModelCell(row, rowIndex) {
+  const cell = document.createElement("td");
+
+  if (!fluidReferenceEditMode) {
+    cell.textContent = row.displayName;
+    return cell;
+  }
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "fluid-pump-editor";
+
+  const upButton = document.createElement("button");
+  upButton.type = "button";
+  upButton.textContent = "Up";
+  upButton.dataset.fluidMove = "-1";
+  upButton.dataset.index = String(rowIndex);
+  upButton.disabled = rowIndex === 0;
+
+  const name = document.createElement("span");
+  name.textContent = row.displayName;
+
+  const downButton = document.createElement("button");
+  downButton.type = "button";
+  downButton.textContent = "Down";
+  downButton.dataset.fluidMove = "1";
+  downButton.dataset.index = String(rowIndex);
+  downButton.disabled = rowIndex === fluidReferenceRows.length - 1;
+
+  wrapper.append(upButton, name, downButton);
+  cell.appendChild(wrapper);
+  return cell;
+}
+
+function createFluidReferenceValueCell(value, type, groupIndex) {
+  const cell = document.createElement("td");
+
+  if (!fluidReferenceEditMode) {
+    cell.textContent = formatReferenceValue(value);
+    return cell;
+  }
+
+  const input = document.createElement("input");
+  input.type = "number";
+  input.step = "0.001";
+  input.value = value === null ? "" : String(value);
+  input.dataset.type = type;
+  input.dataset.group = String(groupIndex);
+  input.addEventListener("input", () => {
+    const row = input.closest("tr");
+    const rowIndex = Array.from(fluidReferenceTableBody.children).indexOf(row);
+    fluidReferenceRows[rowIndex][type][groupIndex] = parseReferenceNumber(input.value);
+  });
+
+  cell.appendChild(input);
+  return cell;
+}
+
+function moveFluidReferencePump(rowIndex, direction) {
+  const targetIndex = rowIndex + direction;
+  if (targetIndex < 0 || targetIndex >= fluidReferenceRows.length) return;
+
+  const current = fluidReferenceRows[rowIndex];
+  const target = fluidReferenceRows[targetIndex];
+  const currentModel = current.model;
+  const currentDisplayName = current.displayName;
+  const currentIsPump = current.isPump;
+
+  current.model = target.model;
+  current.displayName = target.displayName;
+  current.isPump = target.isPump;
+  target.model = currentModel;
+  target.displayName = currentDisplayName;
+  target.isPump = currentIsPump;
+
+  renderFluidReferenceRows();
+}
+
+async function saveFluidReferenceRows() {
+  setFluidReferenceStatus("Saving changes to Supabase...");
+  fluidReferenceSaveBtn.disabled = true;
+
+  try {
+    await Promise.all([
+      saveFluidReferenceTable("abresivitat", "abrasivity"),
+      saveFluidReferenceTable("viskositat", "viscosity")
+    ]);
+
+    fluidReferenceEditMode = false;
+    savedFluidReferenceRows = cloneFluidReferenceRows(fluidReferenceRows);
+    renderFluidReferenceRows();
+    setFluidReferenceStatus("Changes saved. Calculations will use the new values.");
+  } catch (error) {
+    setFluidReferenceStatus(error.message || "Changes could not be saved.", true);
+  } finally {
+    fluidReferenceSaveBtn.disabled = false;
+  }
+}
+
+async function saveFluidReferenceTable(tableName, type) {
+  const supabaseClient = getSupabaseClient();
+  const columns = fluidReferenceColumns[type].length ? fluidReferenceColumns[type] : ["group_1", "group_2", "group_3", "group_4"];
+
+  for (const row of fluidReferenceRows) {
+    const payload = {};
+    columns.forEach((column, index) => {
+      payload[column] = row[type][index];
+    });
+
+    const { error } = await supabaseClient
+      .from(tableName)
+      .update(payload)
+      .eq("selection_key", row.model);
+
+    if (error) throw error;
+  }
+}
+
+function getGroupColumnKeys(rows) {
+  const sample = rows.find(row => row && typeof row === "object") || {};
+
+  return [1, 2, 3, 4].map(groupNumber => {
+    const possibleColumns = [
+      "group_" + groupNumber,
+      "group" + groupNumber,
+      "grup_" + groupNumber,
+      "grup" + groupNumber,
+      "g" + groupNumber,
+      String(groupNumber)
+    ];
+
+    return Object.keys(sample).find(key => possibleColumns.includes(key.toLowerCase())) || "group_" + groupNumber;
+  });
+}
+
+function parseReferenceNumber(value) {
+  const number = parseDecimal(String(value || "").trim());
+  return Number.isFinite(number) ? number : null;
+}
+
+function formatReferenceValue(value) {
+  if (value === null || value === undefined) return "-";
+  return String(value).replace(".", ",");
+}
+
+function cloneFluidReferenceRows(rows) {
+  return rows.map(row => ({
+    ...row,
+    abrasivity: [...row.abrasivity],
+    viscosity: [...row.viscosity]
+  }));
+}
+
+function setFluidReferenceStatus(message, isError = false) {
+  if (!fluidReferenceStatus) return;
+  fluidReferenceStatus.textContent = message;
+  fluidReferenceStatus.classList.toggle("error", isError);
+}
+
 
 const flowInputs = {
   lmin: document.getElementById("flowLMin"),

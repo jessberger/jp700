@@ -180,7 +180,15 @@
     <div class="page-data-section">
       <div class="page-data-divider"></div>
       <p class="page-data-kicker">Data in this page</p>
-      <h2>Abrasivity and Viscosity values</h2>
+      <div class="reference-section-header">
+        <h2>Abrasivity and Viscosity values</h2>
+        <div class="reference-actions">
+          <button id="fluidReferenceEditBtn" class="nav-btn" type="button">Edit</button>
+          <button id="fluidReferenceCancelBtn" class="nav-btn hidden" type="button">Cancel</button>
+          <button id="fluidReferenceSaveBtn" class="nav-btn primary hidden" type="button">Save</button>
+        </div>
+      </div>
+      <div id="fluidReferenceStatus" class="reference-edit-status" aria-live="polite"></div>
       <div class="reference-table-wrapper">
         <table class="reference-table fluid-reference-table">
           <thead>
@@ -196,7 +204,7 @@
               <th>Viscosity - group4</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="fluidReferenceTableBody">
             <tr class="pump-reference-row"><td>12.1</td><td>170</td><td>675</td><td>1350</td><td>2615</td><td>675</td><td>1350</td><td>2100</td><td>2615</td></tr>
             <tr class="pump-reference-row"><td>12.2</td><td>161</td><td>641</td><td>1282</td><td>2484</td><td>641</td><td>1282</td><td>1992</td><td>2484</td></tr>
             <tr><td>17</td><td>152</td><td>607</td><td>1214</td><td>2353</td><td>607</td><td>1214</td><td>1884</td><td>2353</td></tr>

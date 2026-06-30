@@ -1389,3 +1389,98 @@ body:not(.auth-locked) .auth-screen {
   color: var(--accent-dark, #003f7d);
   text-decoration: underline;
 }
+
+
+.reference-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.reference-section-header h2 {
+  margin: 0;
+}
+
+.reference-actions {
+  display: flex;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.nav-btn.primary {
+  border-color: var(--accent, #0053a6);
+  background: var(--accent, #0053a6);
+  color: #ffffff;
+}
+
+.reference-edit-status {
+  min-height: 18px;
+  margin: -4px 0 12px;
+  color: var(--muted, #607188);
+  font-size: 12px;
+  text-align: right;
+}
+
+.reference-edit-status.error {
+  color: #b42318;
+}
+
+.fluid-reference-table tbody.is-editing td {
+  background: #ffffff;
+}
+
+.fluid-reference-table tbody.is-editing tr.pump-reference-row td {
+  background: #fffaf0;
+}
+
+.fluid-reference-table input {
+  width: 100%;
+  min-width: 54px;
+  padding: 6px 4px;
+  border: 1px solid var(--border-strong, #9fb1c5);
+  border-radius: 5px;
+  color: var(--text, #102033);
+  font: inherit;
+  text-align: center;
+}
+
+.fluid-pump-editor {
+  display: grid;
+  grid-template-columns: auto minmax(42px, 1fr) auto;
+  gap: 5px;
+  align-items: center;
+}
+
+.fluid-pump-editor span {
+  font-weight: 800;
+  text-align: center;
+}
+
+.fluid-pump-editor button {
+  padding: 4px 5px;
+  border: 1px solid var(--border, #d9e1ea);
+  border-radius: 5px;
+  background: #ffffff;
+  color: var(--accent, #0053a6);
+  font-size: 9px;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.fluid-pump-editor button:disabled {
+  color: #9aa8b7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .reference-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .reference-edit-status {
+    text-align: left;
+  }
+}
