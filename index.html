@@ -36,168 +36,264 @@
           <form class="auth-form" id="authForm">
             <label>
               Username
-              <input
-                id="usernameInput"
-                name="username"
-                type="email"
-                autocomplete="username"
-                placeholder="name@company.com"
-                required
-              />
+              <input id="usernameInput" name="username" type="email" autocomplete="username" placeholder="name@company.com" required />
             </label>
 
             <label>
               Password
-              <input
-                id="passwordInput"
-                name="password"
-                type="password"
-                autocomplete="current-password"
-                placeholder="Enter your password"
-                required
-              />
+              <input id="passwordInput" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
             </label>
 
-            <button class="primary-action" type="submit" id="submitButton">
-              Sign in
-            </button>
+            <button class="primary-action" type="submit" id="submitButton">Sign in</button>
           </form>
 
-          <p class="auth-note" id="authNote">
-            Access is managed manually by Jessberger.
-          </p>
+          <p class="auth-note" id="authNote">Access is managed manually by Jessberger.</p>
         </div>
       </section>
     </main>
 
-    <main class="projects-page is-hidden" id="projectsPage">
-      <header class="selector-header">
-        <a class="selector-logo" href="./" aria-label="Jessberger home">
-          <img src="images/logo.png" alt="Jessberger" />
-        </a>
-        <h1>Eccentric Screw Pump Selector</h1>
-      </header>
-
-      <section class="projects-workspace" aria-label="Projects">
-        <div class="projects-topbar">
-          <div>
-            <p class="section-kicker">Project workspace</p>
-            <h2>Projects</h2>
-          </div>
-          <button class="primary-action compact-action" type="button" id="startProjectBtn">
-            Start a project
-          </button>
+    <main class="workspace-shell is-hidden" id="workspaceShell">
+      <aside class="workspace-sidebar" aria-label="Project navigation">
+        <div>
+          <p class="sidebar-title">Project Workspace</p>
+          <nav class="sidebar-nav" aria-label="Selector steps">
+            <button class="sidebar-step" type="button" data-page="projects">Projects</button>
+            <button class="sidebar-step" type="button" data-page="selector">Type and Values</button>
+            <button class="sidebar-step" type="button" data-page="media">Media Properties</button>
+            <button class="sidebar-step" type="button" data-page="preview">Preview</button>
+          </nav>
         </div>
 
-        <article class="projects-card">
-          <div class="projects-table-wrap">
-            <table class="projects-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Customer</th>
-                  <th>Project name</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="projectsTableBody"></tbody>
-            </table>
-          </div>
-          <p class="empty-projects" id="emptyProjects">No projects yet.</p>
-        </article>
-      </section>
-    </main>
-
-    <main class="selector-page is-hidden" id="selectorPage">
-      <header class="selector-header">
-        <a class="selector-logo" href="./" aria-label="Jessberger home">
-          <img src="images/logo.png" alt="Jessberger" />
-        </a>
-        <h1>Eccentric Screw Pump Selector</h1>
-        <div class="header-actions">
-          <button class="ghost-action" type="button" id="backToProjectsBtn">Back</button>
-          <button class="primary-action compact-action" type="button" id="saveProjectBtn">Save</button>
+        <div class="sidebar-account">
+          <span id="signedInEmail">Signed in</span>
+          <button type="button" id="logoutBtn">Logout</button>
         </div>
-      </header>
+      </aside>
 
-      <section class="selector-workspace" aria-label="Pump selection inputs">
-        <div class="project-context" id="projectContext"></div>
+      <div class="workspace-content">
+        <section class="projects-page" id="projectsPage">
+          <header class="selector-header">
+            <a class="selector-logo" href="./" aria-label="Jessberger home">
+              <img src="images/logo.png" alt="Jessberger" />
+            </a>
+            <h1>Eccentric Screw Pump Selector</h1>
+          </header>
 
-        <article class="selection-card type-card">
-          <div class="card-heading">
-            <span>01</span>
-            <h2>Type</h2>
-          </div>
-
-          <div class="toggle-grid" aria-label="Pump type selections">
-            <fieldset class="toggle-group">
-              <legend>Application</legend>
-              <div class="segmented-control" data-toggle-group="application">
-                <button type="button" class="toggle-option is-active" data-value="food">Food</button>
-                <button type="button" class="toggle-option" data-value="non-food">Non-Food</button>
+          <section class="projects-workspace" aria-label="Projects">
+            <div class="projects-topbar">
+              <div>
+                <p class="section-kicker">Project workspace</p>
+                <h2>Projects</h2>
               </div>
-            </fieldset>
-
-            <fieldset class="toggle-group">
-              <legend>Certification</legend>
-              <div class="segmented-control" data-toggle-group="certification">
-                <button type="button" class="toggle-option is-active" data-value="atex">ATEX</button>
-                <button type="button" class="toggle-option" data-value="non-atex">Non-ATEX</button>
-              </div>
-            </fieldset>
-
-            <fieldset class="toggle-group">
-              <legend>Orientation</legend>
-              <div class="segmented-control" data-toggle-group="orientation">
-                <button type="button" class="toggle-option is-active" data-value="vertical">Vertical</button>
-                <button type="button" class="toggle-option" data-value="horizontal">Horizontal</button>
-              </div>
-            </fieldset>
-          </div>
-        </article>
-
-        <article class="selection-card flow-card">
-          <div class="card-heading">
-            <span>02</span>
-            <h2>Flow Rate</h2>
-          </div>
-
-          <div class="flow-grid" aria-label="Flow rate inputs">
-            <label class="flow-field">
-              Q (l/min)
-              <input id="flowLMin" type="number" min="0" step="0.01" inputmode="decimal" />
-            </label>
-            <label class="flow-field">
-              Q (l/h)
-              <input id="flowLHour" type="number" min="0" step="0.01" inputmode="decimal" />
-            </label>
-            <label class="flow-field">
-              Q (m³/h)
-              <input id="flowM3Hour" type="number" min="0" step="0.01" inputmode="decimal" />
-            </label>
-          </div>
-        </article>
-
-        <article class="selection-card pressure-card">
-          <div class="card-heading">
-            <span>03</span>
-            <h2>Pressure</h2>
-          </div>
-
-          <div class="pressure-control">
-            <div class="pressure-track-wrap">
-              <input id="pressureSlider" type="range" min="0" max="24" step="1" value="0" />
-              <div class="pressure-ticks" id="pressureTicks" aria-hidden="true"></div>
+              <button class="primary-action compact-action" type="button" id="startProjectBtn">Start a project</button>
             </div>
 
-            <label class="pressure-value">
-              bar
-              <input id="pressureInput" type="number" min="0" max="24" step="1" value="0" />
-            </label>
-          </div>
-        </article>
-      </section>
+            <article class="projects-card">
+              <div class="projects-table-wrap">
+                <table class="projects-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Customer</th>
+                      <th>Project name</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="projectsTableBody"></tbody>
+                </table>
+              </div>
+              <p class="empty-projects" id="emptyProjects">No projects yet.</p>
+            </article>
+          </section>
+        </section>
+
+        <section class="selector-page is-hidden" id="selectorPage">
+          <header class="selector-header">
+            <a class="selector-logo" href="./" aria-label="Jessberger home">
+              <img src="images/logo.png" alt="Jessberger" />
+            </a>
+            <h1>Eccentric Screw Pump Selector</h1>
+            <div class="header-actions">
+              <button class="ghost-action" type="button" id="backToProjectsBtn">Back</button>
+              <button class="ghost-action" type="button" id="goToMediaBtn">Next</button>
+              <button class="primary-action compact-action" type="button" id="saveProjectBtn">Save</button>
+            </div>
+          </header>
+
+          <section class="selector-workspace" aria-label="Pump selection inputs">
+            <div class="project-context" id="projectContext"></div>
+
+            <article class="selection-card type-card">
+              <div class="card-heading">
+                <span>01</span>
+                <h2>Type</h2>
+              </div>
+
+              <div class="toggle-grid" aria-label="Pump type selections">
+                <fieldset class="toggle-group">
+                  <legend>Application</legend>
+                  <div class="segmented-control" data-toggle-group="application">
+                    <button type="button" class="toggle-option is-active" data-value="food">Food</button>
+                    <button type="button" class="toggle-option" data-value="non-food">Non-Food</button>
+                  </div>
+                </fieldset>
+
+                <fieldset class="toggle-group">
+                  <legend>Certification</legend>
+                  <div class="segmented-control" data-toggle-group="certification">
+                    <button type="button" class="toggle-option is-active" data-value="atex">ATEX</button>
+                    <button type="button" class="toggle-option" data-value="non-atex">Non-ATEX</button>
+                  </div>
+                </fieldset>
+
+                <fieldset class="toggle-group">
+                  <legend>Orientation</legend>
+                  <div class="segmented-control" data-toggle-group="orientation">
+                    <button type="button" class="toggle-option is-active" data-value="vertical">Vertical</button>
+                    <button type="button" class="toggle-option" data-value="horizontal">Horizontal</button>
+                  </div>
+                </fieldset>
+              </div>
+            </article>
+
+            <article class="selection-card flow-card">
+              <div class="card-heading">
+                <span>02</span>
+                <h2>Flow Rate</h2>
+              </div>
+
+              <div class="flow-grid" aria-label="Flow rate inputs">
+                <label class="flow-field">
+                  Q (l/min)
+                  <input id="flowLMin" type="number" min="0" step="0.01" inputmode="decimal" />
+                </label>
+                <label class="flow-field">
+                  Q (l/h)
+                  <input id="flowLHour" type="number" min="0" step="0.01" inputmode="decimal" />
+                </label>
+                <label class="flow-field">
+                  Q (m³/h)
+                  <input id="flowM3Hour" type="number" min="0" step="0.01" inputmode="decimal" />
+                </label>
+              </div>
+            </article>
+
+            <article class="selection-card pressure-card">
+              <div class="card-heading">
+                <span>03</span>
+                <h2>Pressure</h2>
+              </div>
+
+              <div class="pressure-control">
+                <div class="pressure-track-wrap">
+                  <input id="pressureSlider" type="range" min="0" max="24" step="1" value="0" />
+                  <div class="pressure-ticks" id="pressureTicks" aria-hidden="true"></div>
+                </div>
+
+                <label class="pressure-value">
+                  bar
+                  <input id="pressureInput" type="number" min="0" max="24" step="1" value="0" />
+                </label>
+              </div>
+            </article>
+          </section>
+        </section>
+
+        <section class="selector-page is-hidden" id="mediaPage">
+          <header class="selector-header">
+            <a class="selector-logo" href="./" aria-label="Jessberger home">
+              <img src="images/logo.png" alt="Jessberger" />
+            </a>
+            <h1>Eccentric Screw Pump Selector</h1>
+            <div class="header-actions">
+              <button class="ghost-action" type="button" id="backToTypeBtn">Back</button>
+              <button class="ghost-action" type="button" id="goToPreviewBtn">Preview</button>
+              <button class="primary-action compact-action" type="button" id="saveMediaBtn">Save</button>
+            </div>
+          </header>
+
+          <section class="selector-workspace" aria-label="Media properties">
+            <div class="project-context" id="mediaProjectContext"></div>
+            <article class="selection-card media-card">
+              <div class="card-heading">
+                <span>04</span>
+                <h2>Media Properties</h2>
+              </div>
+
+              <div class="media-columns">
+                <section class="media-column" aria-label="Abrasivity">
+                  <h3>Abrasivity</h3>
+                  <div class="option-stack" data-media-group="abrasivity">
+                    <button type="button" class="media-option is-active" data-value="Group 1: Highly abrasive media">
+                      <strong>Group 1: Highly abrasive media</strong>
+                      <span>(e.g. mortar, ceramic particles, lime slurry)</span>
+                    </button>
+                    <button type="button" class="media-option" data-value="Group 2: Abrasive media">
+                      <strong>Group 2: Abrasive media</strong>
+                      <span>(e.g. clarification sludge)</span>
+                    </button>
+                    <button type="button" class="media-option" data-value="Group 3: Slightly abrasive media">
+                      <strong>Group 3: Slightly abrasive media</strong>
+                      <span>(e.g. contaminated, low-viscosity liquids)</span>
+                    </button>
+                    <button type="button" class="media-option" data-value="Group 4: Non-abrasive media">
+                      <strong>Group 4: Non-abrasive media</strong>
+                      <span>(e.g. clean water)</span>
+                    </button>
+                  </div>
+                </section>
+
+                <section class="media-column" aria-label="Viscosity">
+                  <h3>Viscosity</h3>
+                  <div class="option-stack" data-media-group="viscosity">
+                    <button type="button" class="media-option is-active" data-value="Group 1: Very high viscosity">
+                      <strong>Group 1: Very high viscosity</strong>
+                      <span>(&gt; 50,000 mPa·s) - e.g. greases, pastes</span>
+                    </button>
+                    <button type="button" class="media-option" data-value="Group 2: High viscosity">
+                      <strong>Group 2: High viscosity</strong>
+                      <span>(&gt; 8,000 mPa·s) - e.g. polymer dispersions, paints</span>
+                    </button>
+                    <button type="button" class="media-option" data-value="Group 3: Medium viscosity">
+                      <strong>Group 3: Medium viscosity</strong>
+                      <span>(&gt; 2,000 mPa·s) - e.g. oils, fruit juice concentrates</span>
+                    </button>
+                    <button type="button" class="media-option" data-value="Group 4: Low viscosity">
+                      <strong>Group 4: Low viscosity</strong>
+                      <span>(&lt; 2,000 mPa·s) - e.g. light oils</span>
+                    </button>
+                  </div>
+                </section>
+              </div>
+            </article>
+          </section>
+        </section>
+
+        <section class="selector-page is-hidden" id="previewPage">
+          <header class="selector-header">
+            <a class="selector-logo" href="./" aria-label="Jessberger home">
+              <img src="images/logo.png" alt="Jessberger" />
+            </a>
+            <h1>Eccentric Screw Pump Selector</h1>
+            <div class="header-actions">
+              <button class="ghost-action" type="button" id="backToMediaBtn">Back</button>
+              <button class="ghost-action" type="button" id="editFromPreviewBtn">Edit</button>
+            </div>
+          </header>
+
+          <section class="selector-workspace" aria-label="Project preview">
+            <div class="project-context" id="previewProjectContext"></div>
+            <article class="selection-card preview-card">
+              <div class="card-heading">
+                <span>Preview</span>
+                <h2>Selection Summary</h2>
+              </div>
+              <dl class="preview-list" id="previewList"></dl>
+            </article>
+          </section>
+        </section>
+      </div>
     </main>
 
     <div class="modal-backdrop is-hidden" id="projectModal" role="dialog" aria-modal="true" aria-labelledby="projectModalTitle">
@@ -224,3 +320,4 @@
     <script src="script.js"></script>
   </body>
 </html>
+
