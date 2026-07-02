@@ -1,35 +1,58 @@
-const pageMode = new URLSearchParams(window.location.search).get("mode");
-const hashMode = window.location.hash.includes("set-password");
-const isPasswordSetup = pageMode === "set-password" || hashMode;
-
-const authForm = document.querySelector("#authForm");
-const authTitle = document.querySelector("#authTitle");
-const authNote = document.querySelector("#authNote");
-const submitButton = document.querySelector("#submitButton");
+﻿const authForm = document.querySelector("#authForm");
+const usernameInput = document.querySelector("#usernameInput");
 const passwordInput = document.querySelector("#passwordInput");
-const confirmPasswordInput = document.querySelector("#confirmPasswordInput");
+const submitButton = document.querySelector("#submitButton");
+const authNote = document.querySelector("#authNote");
 
-if (isPasswordSetup) {
-  document.body.classList.add("password-setup");
-  authTitle.textContent = "Set your password";
-  authNote.textContent =
-    "This page is opened from an invitation link. Public registration remains closed.";
-  passwordInput.placeholder = "Create a password";
-  passwordInput.autocomplete = "new-password";
-  confirmPasswordInput.required = true;
-  submitButton.textContent = "Save password";
+const SUPABASE_URL = "https://zglsynbyeldfbsmyrlpi.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtrem9sZGFwd3JzZmZoaHFrdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4NTk0ODMsImV4cCI6MjA5ODQzNTQ4M30.vhKBIxVfixfAYVJ-tednebgwi-RggFCkCcb1aCMKDaA";
+
+function setFormState(isLoading, message) {
+  submitButton.disabled = isLoading;
+  submitButton.textContent = isLoading ? "Signing in" : "Sign in";
+  if (message) {
+    authNote.textContent = message;
+  }
 }
 
-authForm.addEventListener("submit", (event) => {
+authForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  if (isPasswordSetup && passwordInput.value !== confirmPasswordInput.value) {
-    confirmPasswordInput.setCustomValidity("Passwords do not match.");
-    confirmPasswordInput.reportValidity();
+  if (!SUPABASE_ANON_KEY) {
+    setFormState(
+      false,
+      "Supabase anon key is missing. Add it in script.js before publishing."
+    );
     return;
   }
 
-  confirmPasswordInput.setCustomValidity("");
-  submitButton.textContent = isPasswordSetup ? "Password saved" : "Signing in";
-  submitButton.disabled = true;
+  setFormState(true, "Checking account...");
+
+  try {
+    const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: usernameInput.value.trim(),
+        password: passwordInput.value,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      setFormState(false, result.error_description || result.msg || "Login failed.");
+      return;
+    }
+
+    localStorage.setItem("jp700_access_token", result.access_token);
+    localStorage.setItem("jp700_refresh_token", result.refresh_token);
+    setFormState(false, "Signed in successfully.");
+  } catch (error) {
+    setFormState(false, "Connection failed. Please try again.");
+  }
 });
