@@ -4,6 +4,7 @@ const projectsPage = document.querySelector("#projectsPage");
 const selectorPage = document.querySelector("#selectorPage");
 const mediaPage = document.querySelector("#mediaPage");
 const previewPage = document.querySelector("#previewPage");
+const datasetsPage = document.querySelector("#datasetsPage");
 const authForm = document.querySelector("#authForm");
 const usernameInput = document.querySelector("#usernameInput");
 const passwordInput = document.querySelector("#passwordInput");
@@ -68,6 +69,8 @@ function showPage(page) {
   selectorPage.classList.toggle("is-hidden", page !== "selector");
   mediaPage.classList.toggle("is-hidden", page !== "media");
   previewPage.classList.toggle("is-hidden", page !== "preview");
+  datasetsPage.classList.toggle("is-hidden", page !== "datasets");
+  workspaceShell.dataset.page = page;
   updateSidebar(page);
 }
 
@@ -290,6 +293,7 @@ function autosaveActiveProject() {
 
 function getVisiblePage() {
   if (!projectsPage.classList.contains("is-hidden")) return "projects";
+  if (!datasetsPage.classList.contains("is-hidden")) return "datasets";
   if (!selectorPage.classList.contains("is-hidden")) return "selector";
   if (!mediaPage.classList.contains("is-hidden")) return "media";
   if (!previewPage.classList.contains("is-hidden")) return "preview";
@@ -388,10 +392,10 @@ logoutBtn.addEventListener("click", () => {
 sidebarSteps.forEach((step) => {
   step.addEventListener("click", () => {
     const page = step.dataset.page;
-    if (page !== "projects" && !getActiveProject()) return;
+    if (!["projects", "datasets"].includes(page) && !getActiveProject()) return;
     if (page === "media" && !validateTypeValues()) return;
-    if (page === "preview" && !validateMediaValues()) return;
-    if (page === "preview") {
+    if (page === "preview" && getActiveProject() && !validateMediaValues()) return;
+    if (page === "preview" && getActiveProject()) {
       saveActiveProject();
       renderPreview(getActiveProject());
     }
@@ -618,6 +622,7 @@ if (hasSavedSession()) {
 } else {
   showPage("login");
 }
+
 
 
 

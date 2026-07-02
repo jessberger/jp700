@@ -1060,3 +1060,70 @@ h1 {
     justify-self: stretch;
   }
 }
+
+.workspace-shell[data-page="projects"] .workflow-step,
+.workspace-shell[data-page="projects"] .workflow-divider,
+.workspace-shell:not(.has-active-project) .workflow-step,
+.workspace-shell:not(.has-active-project) .workflow-divider {
+  display: none;
+}
+
+.workspace-shell:not(.has-active-project) .preview-step {
+  opacity: 0.48;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid rgba(134, 153, 172, 0.24);
+}
+
+.dataset-step {
+  width: 100%;
+}
+
+.datasets-card {
+  max-width: 920px;
+  margin-left: 0;
+}
+
+.dataset-note {
+  margin: 0 0 22px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dataset-permission-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dataset-permission-grid div {
+  min-height: 112px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 16px;
+  border: 1px solid rgba(0, 92, 168, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.dataset-permission-grid strong {
+  color: var(--steel);
+  font-size: 14px;
+}
+
+.dataset-permission-grid span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .dataset-permission-grid {
+    grid-template-columns: 1fr;
+  }
+}

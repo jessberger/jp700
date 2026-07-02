@@ -58,11 +58,15 @@
           <p class="sidebar-title">Project Workspace</p>
           <nav class="sidebar-nav" aria-label="Selector steps">
             <button class="sidebar-step" type="button" data-page="projects">Projects</button>
-            <div class="sidebar-divider"></div>
-            <button class="sidebar-step project-step" type="button" data-page="selector">Type and Values</button>
-            <button class="sidebar-step project-step" type="button" data-page="media">Media Properties</button>
-            <button class="sidebar-step project-step" type="button" data-page="preview">Preview</button>
+            <button class="sidebar-step preview-step" type="button" data-page="preview">Preview</button>
+            <div class="sidebar-divider workflow-divider"></div>
+            <button class="sidebar-step workflow-step" type="button" data-page="selector">Type and Values</button>
+            <button class="sidebar-step workflow-step" type="button" data-page="media">Media Properties</button>
           </nav>
+        </div>
+
+        <div class="sidebar-footer">
+          <button class="sidebar-step dataset-step" type="button" data-page="datasets">Datasets</button>
         </div>
 
         <div class="sidebar-account">
@@ -297,6 +301,39 @@
             </div>
           </section>
         </section>
+
+        <section class="selector-page is-hidden" id="datasetsPage">
+          <header class="selector-header">
+            <a class="selector-logo" href="./" aria-label="Jessberger home">
+              <img src="images/logo.png" alt="Jessberger" />
+            </a>
+            <h1>Eccentric Screw Pump Selector</h1>
+          </header>
+
+          <section class="selector-workspace" aria-label="Datasets">
+            <article class="selection-card datasets-card">
+              <div class="card-heading">
+                <span>Data</span>
+                <h2>Datasets</h2>
+              </div>
+              <p class="dataset-note">Dataset tables will be shown here after the Excel data is imported to Supabase.</p>
+              <div class="dataset-permission-grid">
+                <div>
+                  <strong>Admin editor</strong>
+                  <span>Can view and update dataset values.</span>
+                </div>
+                <div>
+                  <strong>Internal viewer</strong>
+                  <span>Can view datasets but cannot edit them.</span>
+                </div>
+                <div>
+                  <strong>Partner user</strong>
+                  <span>Cannot access this page.</span>
+                </div>
+              </div>
+            </article>
+          </section>
+        </section>
       </div>
     </main>
 
@@ -324,6 +361,7 @@
     <script src="script.js"></script>
   </body>
 </html>
+
 
 
 
