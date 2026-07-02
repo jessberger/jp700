@@ -58,9 +58,10 @@
           <p class="sidebar-title">Project Workspace</p>
           <nav class="sidebar-nav" aria-label="Selector steps">
             <button class="sidebar-step" type="button" data-page="projects">Projects</button>
-            <button class="sidebar-step" type="button" data-page="selector">Type and Values</button>
-            <button class="sidebar-step" type="button" data-page="media">Media Properties</button>
-            <button class="sidebar-step" type="button" data-page="preview">Preview</button>
+            <div class="sidebar-divider"></div>
+            <button class="sidebar-step project-step" type="button" data-page="selector">Type and Values</button>
+            <button class="sidebar-step project-step" type="button" data-page="media">Media Properties</button>
+            <button class="sidebar-step project-step" type="button" data-page="preview">Preview</button>
           </nav>
         </div>
 
@@ -114,11 +115,6 @@
               <img src="images/logo.png" alt="Jessberger" />
             </a>
             <h1>Eccentric Screw Pump Selector</h1>
-            <div class="header-actions">
-              <button class="ghost-action" type="button" id="backToProjectsBtn">Back</button>
-              <button class="ghost-action" type="button" id="goToMediaBtn">Next</button>
-              <button class="primary-action compact-action" type="button" id="saveProjectBtn">Save</button>
-            </div>
           </header>
 
           <section class="selector-workspace" aria-label="Pump selection inputs">
@@ -197,6 +193,12 @@
                 </label>
               </div>
             </article>
+
+            <div class="page-actions">
+              <button class="ghost-action page-action-left" type="button" id="backToProjectsBtn">Back</button>
+              <button class="primary-action compact-action page-action-center" type="button" id="saveProjectBtn">Save</button>
+              <button class="primary-action compact-action page-action-right" type="button" id="goToMediaBtn">Next</button>
+            </div>
           </section>
         </section>
 
@@ -206,11 +208,6 @@
               <img src="images/logo.png" alt="Jessberger" />
             </a>
             <h1>Eccentric Screw Pump Selector</h1>
-            <div class="header-actions">
-              <button class="ghost-action" type="button" id="backToTypeBtn">Back</button>
-              <button class="ghost-action" type="button" id="goToPreviewBtn">Preview</button>
-              <button class="primary-action compact-action" type="button" id="saveMediaBtn">Save</button>
-            </div>
           </header>
 
           <section class="selector-workspace" aria-label="Media properties">
@@ -225,7 +222,7 @@
                 <section class="media-column" aria-label="Abrasivity">
                   <h3>Abrasivity</h3>
                   <div class="option-stack" data-media-group="abrasivity">
-                    <button type="button" class="media-option is-active" data-value="Group 1: Highly abrasive media">
+                    <button type="button" class="media-option" data-value="Group 1: Highly abrasive media">
                       <strong>Group 1: Highly abrasive media</strong>
                       <span>(e.g. mortar, ceramic particles, lime slurry)</span>
                     </button>
@@ -247,7 +244,7 @@
                 <section class="media-column" aria-label="Viscosity">
                   <h3>Viscosity</h3>
                   <div class="option-stack" data-media-group="viscosity">
-                    <button type="button" class="media-option is-active" data-value="Group 1: Very high viscosity">
+                    <button type="button" class="media-option" data-value="Group 1: Very high viscosity">
                       <strong>Group 1: Very high viscosity</strong>
                       <span>(&gt; 50,000 mPa·s) - e.g. greases, pastes</span>
                     </button>
@@ -267,6 +264,12 @@
                 </section>
               </div>
             </article>
+
+            <div class="page-actions">
+              <button class="ghost-action page-action-left" type="button" id="backToTypeBtn">Back</button>
+              <button class="primary-action compact-action page-action-center" type="button" id="saveMediaBtn">Save</button>
+              <button class="primary-action compact-action page-action-right" type="button" id="goToPreviewBtn">Next</button>
+            </div>
           </section>
         </section>
 
@@ -276,10 +279,6 @@
               <img src="images/logo.png" alt="Jessberger" />
             </a>
             <h1>Eccentric Screw Pump Selector</h1>
-            <div class="header-actions">
-              <button class="ghost-action" type="button" id="backToMediaBtn">Back</button>
-              <button class="ghost-action" type="button" id="editFromPreviewBtn">Edit</button>
-            </div>
           </header>
 
           <section class="selector-workspace" aria-label="Project preview">
@@ -291,6 +290,11 @@
               </div>
               <dl class="preview-list" id="previewList"></dl>
             </article>
+
+            <div class="page-actions final-actions">
+              <button class="ghost-action page-action-left" type="button" id="backToMediaBtn">Back</button>
+              <button class="primary-action compact-action page-action-right" type="button" id="saveAndCloseBtn">Save and close</button>
+            </div>
           </section>
         </section>
       </div>
@@ -320,4 +324,7 @@
     <script src="script.js"></script>
   </body>
 </html>
+
+
+
 

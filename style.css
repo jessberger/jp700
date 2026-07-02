@@ -993,3 +993,70 @@ h1 {
   min-width: 54px;
   padding: 0 12px;
 }
+
+.workspace-shell:not(.has-active-project) .project-step,
+.workspace-shell:not(.has-active-project) .sidebar-divider {
+  display: none;
+}
+
+.sidebar-divider {
+  height: 1px;
+  margin: 12px 0;
+  background: rgba(134, 153, 172, 0.28);
+}
+
+.page-actions {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(134, 153, 172, 0.2);
+}
+
+.page-action-left {
+  justify-self: start;
+}
+
+.page-action-center {
+  justify-self: center;
+}
+
+.page-action-right {
+  justify-self: end;
+}
+
+.page-actions .primary-action,
+.page-actions .ghost-action {
+  min-width: 132px;
+  min-height: 46px;
+}
+
+.final-actions {
+  grid-template-columns: 1fr 1fr;
+}
+
+.media-option.is-active {
+  color: #fff;
+  border-color: rgba(0, 92, 168, 0.72);
+  background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+  box-shadow: 0 14px 28px rgba(0, 92, 168, 0.18);
+}
+
+.media-option.is-active span {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+@media (max-width: 620px) {
+  .page-actions,
+  .final-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .page-action-left,
+  .page-action-center,
+  .page-action-right {
+    justify-self: stretch;
+  }
+}

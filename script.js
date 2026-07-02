@@ -27,7 +27,7 @@ const backToTypeBtn = document.querySelector("#backToTypeBtn");
 const goToPreviewBtn = document.querySelector("#goToPreviewBtn");
 const saveMediaBtn = document.querySelector("#saveMediaBtn");
 const backToMediaBtn = document.querySelector("#backToMediaBtn");
-const editFromPreviewBtn = document.querySelector("#editFromPreviewBtn");
+const saveAndCloseBtn = document.querySelector("#saveAndCloseBtn");
 const projectContext = document.querySelector("#projectContext");
 const mediaProjectContext = document.querySelector("#mediaProjectContext");
 const previewProjectContext = document.querySelector("#previewProjectContext");
@@ -63,6 +63,7 @@ function showPage(page) {
   const isLogin = page === "login";
   loginPage.classList.toggle("is-hidden", !isLogin);
   workspaceShell.classList.toggle("is-hidden", isLogin);
+  workspaceShell.classList.toggle("has-active-project", Boolean(getActiveProject()));
   projectsPage.classList.toggle("is-hidden", page !== "projects");
   selectorPage.classList.toggle("is-hidden", page !== "selector");
   mediaPage.classList.toggle("is-hidden", page !== "media");
@@ -118,8 +119,8 @@ function createBlankSelection() {
     orientation: "vertical",
     flow: { source: "", lmin: "", lhour: "", m3hour: "" },
     pressure: 0,
-    abrasivity: "Group 1: Highly abrasive media",
-    viscosity: "Group 1: Very high viscosity",
+    abrasivity: "",
+    viscosity: "",
   };
 }
 
@@ -262,8 +263,8 @@ function collectSelection() {
       m3hour: flowInputs.m3hour.value,
     },
     pressure: Number(pressureInput.value) || 0,
-    abrasivity: getMedia("abrasivity") || "Group 1: Highly abrasive media",
-    viscosity: getMedia("viscosity") || "Group 1: Very high viscosity",
+    abrasivity: getMedia("abrasivity") || "",
+    viscosity: getMedia("viscosity") || "",
   };
 }
 
@@ -309,8 +310,8 @@ function renderPreview(project) {
     ["Orientation", labelValue(selection.orientation)],
     ["Flow rate", flowText],
     ["Pressure", `${selection.pressure || 0} bar`],
-    ["Abrasivity", selection.abrasivity],
-    ["Viscosity", selection.viscosity],
+    ["Abrasivity", selection.abrasivity || "Not specified"],
+    ["Viscosity", selection.viscosity || "Not specified"],
   ];
 
   previewList.innerHTML = rows
@@ -323,6 +324,24 @@ function labelValue(value) {
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join("-");
+}
+function validateTypeValues() {
+  const selection = collectSelection();
+  if (!selection.flow.source) {
+    window.alert("Please enter a flow rate before continuing.");
+    return false;
+  }
+  return true;
+}
+
+function validateMediaValues() {
+  if (!validateTypeValues()) return false;
+  const selection = collectSelection();
+  if (!selection.abrasivity || !selection.viscosity) {
+    window.alert("Please select abrasivity and viscosity before continuing.");
+    return false;
+  }
+  return true;
 }
 
 authForm.addEventListener("submit", async (event) => {
@@ -370,6 +389,8 @@ sidebarSteps.forEach((step) => {
   step.addEventListener("click", () => {
     const page = step.dataset.page;
     if (page !== "projects" && !getActiveProject()) return;
+    if (page === "media" && !validateTypeValues()) return;
+    if (page === "preview" && !validateMediaValues()) return;
     if (page === "preview") {
       saveActiveProject();
       renderPreview(getActiveProject());
@@ -447,6 +468,7 @@ backToProjectsBtn.addEventListener("click", () => {
 });
 
 goToMediaBtn.addEventListener("click", () => {
+  if (!validateTypeValues()) return;
   saveActiveProject();
   showPage("media");
 });
@@ -457,6 +479,7 @@ backToTypeBtn.addEventListener("click", () => {
 });
 
 goToPreviewBtn.addEventListener("click", () => {
+  if (!validateMediaValues()) return;
   saveActiveProject();
   renderPreview(getActiveProject());
   showPage("preview");
@@ -466,8 +489,10 @@ backToMediaBtn.addEventListener("click", () => {
   showPage("media");
 });
 
-editFromPreviewBtn.addEventListener("click", () => {
-  showPage("selector");
+saveAndCloseBtn.addEventListener("click", () => {
+  saveActiveProject();
+  renderProjects();
+  showPage("projects");
 });
 
 function flashSaved(button) {
@@ -593,3 +618,6 @@ if (hasSavedSession()) {
 } else {
   showPage("login");
 }
+
+
+
