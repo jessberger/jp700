@@ -58,10 +58,10 @@
           <p class="sidebar-title">Project Workspace</p>
           <nav class="sidebar-nav" aria-label="Selector steps">
             <button class="sidebar-step" type="button" data-page="projects">Projects</button>
-            <button class="sidebar-step preview-step" type="button" data-page="preview">Preview</button>
             <div class="sidebar-divider workflow-divider"></div>
             <button class="sidebar-step workflow-step" type="button" data-page="selector">Type and Values</button>
             <button class="sidebar-step workflow-step" type="button" data-page="media">Media Properties</button>
+            <button class="sidebar-step workflow-step" type="button" data-page="pump">Pump Selection</button>
           </nav>
         </div>
 
@@ -273,12 +273,11 @@
             <div class="page-actions">
               <button class="ghost-action page-action-left" type="button" id="backToTypeBtn">Back</button>
               <button class="primary-action compact-action page-action-center" type="button" id="saveMediaBtn">Save</button>
-              <button class="primary-action compact-action page-action-right" type="button" id="goToPreviewBtn">Next</button>
+              <button class="primary-action compact-action page-action-right" type="button" id="goToPumpBtn">Next</button>
             </div>
           </section>
         </section>
-
-        <section class="selector-page is-hidden" id="previewPage">
+        <section class="selector-page is-hidden" id="pumpPage">
           <header class="selector-header">
             <a class="selector-logo" href="./" aria-label="Jessberger home">
               <img src="images/logo.png" alt="Jessberger" />
@@ -286,20 +285,13 @@
             <h1>Eccentric Screw Pump Selector</h1>
           </header>
 
-          <section class="selector-workspace" aria-label="Project preview">
-            <div class="project-context" id="previewProjectContext"></div>
-            <article class="selection-card preview-card">
-              <div class="card-heading">
-                <span>Preview</span>
-                <h2>Selection Summary</h2>
-              </div>
-              <dl class="preview-list" id="previewList"></dl>
-            </article>
+          <section class="selector-workspace" aria-label="Pump selection results">
+            <div class="project-context" id="pumpProjectContext"></div>
 
             <article class="selection-card pump-results-card">
               <div class="card-heading">
-                <span>Pump Calculation</span>
-                <h2>Available Pump Codes</h2>
+                <span>05</span>
+                <h2>Pump Selection</h2>
               </div>
               <p class="pump-results-status" id="pumpResultsStatus">Enter type, flow, pressure and media values to calculate pump speeds.</p>
               <div class="pump-results-table-shell">
@@ -324,7 +316,6 @@
             </div>
           </section>
         </section>
-
         <section class="selector-page is-hidden" id="datasetsPage">
           <header class="selector-header">
             <a class="selector-logo" href="./" aria-label="Jessberger home">
@@ -384,9 +375,12 @@
       </form>
     </div>
 
-    <script src="script.js?v=20260703-sort"></script>
+    <script src="script.js?v=20260703-pump"></script>
   </body>
 </html>
+
+
+
 
 
 

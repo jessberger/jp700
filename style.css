@@ -909,46 +909,6 @@ h1 {
   box-shadow: 0 14px 28px rgba(0, 92, 168, 0.12);
 }
 
-.preview-card {
-  max-width: 840px;
-  margin-left: 0;
-}
-
-.preview-list {
-  display: grid;
-  grid-template-columns: minmax(180px, 0.32fr) minmax(0, 1fr);
-  gap: 0;
-  margin: 0;
-  overflow: hidden;
-  border: 1px solid rgba(216, 224, 231, 0.82);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.72);
-}
-
-.preview-list dt,
-.preview-list dd {
-  margin: 0;
-  padding: 15px 16px;
-  border-bottom: 1px solid rgba(216, 224, 231, 0.82);
-}
-
-.preview-list dt {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.preview-list dd {
-  color: var(--steel);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.preview-list dt:nth-last-of-type(1),
-.preview-list dd:nth-last-of-type(1) {
-  border-bottom: 0;
-}
 .pump-results-card {
   max-width: 980px;
   margin-left: 0;
@@ -1029,19 +989,6 @@ h1 {
 @media (max-width: 620px) {
   .sidebar-nav {
     grid-template-columns: 1fr;
-  }
-
-  .preview-list {
-    grid-template-columns: 1fr;
-  }
-
-  .preview-list dt {
-    padding-bottom: 6px;
-    border-bottom: 0;
-  }
-
-  .preview-list dd {
-    padding-top: 0;
   }
 }
 
@@ -1125,7 +1072,7 @@ h1 {
   display: none;
 }
 
-.workspace-shell:not(.has-active-project) .preview-step {
+.workspace-shell:not(.has-active-project) .workflow-step {
   opacity: 0.48;
 }
 
@@ -1385,4 +1332,6 @@ h1 {
   color: #a40f15;
   font-weight: 800;
 }
+
+
 

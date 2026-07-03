@@ -3,7 +3,7 @@ const workspaceShell = document.querySelector("#workspaceShell");
 const projectsPage = document.querySelector("#projectsPage");
 const selectorPage = document.querySelector("#selectorPage");
 const mediaPage = document.querySelector("#mediaPage");
-const previewPage = document.querySelector("#previewPage");
+const pumpPage = document.querySelector("#pumpPage");
 const datasetsPage = document.querySelector("#datasetsPage");
 const datasetTabs = document.querySelector("#datasetTabs");
 const datasetTableHead = document.querySelector("#datasetTableHead");
@@ -32,14 +32,13 @@ const backToProjectsBtn = document.querySelector("#backToProjectsBtn");
 const goToMediaBtn = document.querySelector("#goToMediaBtn");
 const saveProjectBtn = document.querySelector("#saveProjectBtn");
 const backToTypeBtn = document.querySelector("#backToTypeBtn");
-const goToPreviewBtn = document.querySelector("#goToPreviewBtn");
+const goToPumpBtn = document.querySelector("#goToPumpBtn");
 const saveMediaBtn = document.querySelector("#saveMediaBtn");
 const backToMediaBtn = document.querySelector("#backToMediaBtn");
 const saveAndCloseBtn = document.querySelector("#saveAndCloseBtn");
 const projectContext = document.querySelector("#projectContext");
 const mediaProjectContext = document.querySelector("#mediaProjectContext");
-const previewProjectContext = document.querySelector("#previewProjectContext");
-const previewList = document.querySelector("#previewList");
+const pumpProjectContext = document.querySelector("#pumpProjectContext");
 const pumpResultsStatus = document.querySelector("#pumpResultsStatus");
 const pumpResultsTableBody = document.querySelector("#pumpResultsTableBody");
 const toggleGroups = document.querySelectorAll(".segmented-control");
@@ -127,7 +126,7 @@ function showPage(page) {
   projectsPage.classList.toggle("is-hidden", page !== "projects");
   selectorPage.classList.toggle("is-hidden", page !== "selector");
   mediaPage.classList.toggle("is-hidden", page !== "media");
-  previewPage.classList.toggle("is-hidden", page !== "preview");
+  pumpPage.classList.toggle("is-hidden", page !== "pump");
   datasetsPage.classList.toggle("is-hidden", page !== "datasets");
   workspaceShell.dataset.page = page;
   workspaceShell.classList.toggle("can-view-datasets", canViewDatasets());
@@ -217,8 +216,7 @@ function renderProjects() {
       <td><span class="status-pill">${project.status}</span></td>
       <td>
         <div class="row-actions">
-          <button class="ghost-action" type="button" data-action="preview" data-id="${project.id}">Preview</button>
-          <button class="icon-action" type="button" data-action="edit" data-id="${project.id}" aria-label="Edit project">Edit</button>
+<button class="icon-action" type="button" data-action="edit" data-id="${project.id}" aria-label="Edit project">Edit</button>
           <button class="icon-action danger-action" type="button" data-action="delete" data-id="${project.id}" aria-label="Delete project">Delete</button>
         </div>
       </td>
@@ -243,7 +241,7 @@ function openProject(projectId, targetPage = "selector") {
   activeProjectId = projectId;
   localStorage.setItem(ACTIVE_PROJECT_KEY, projectId);
   hydrateProject(project);
-  if (targetPage === "preview") renderPreview(project);
+  if (targetPage === "pump") renderPumpPage(project);
   showPage(targetPage);
 }
 
@@ -290,7 +288,7 @@ function hydrateProject(project) {
 
   renderProjectContext(projectContext, project);
   renderProjectContext(mediaProjectContext, project);
-  renderProjectContext(previewProjectContext, project);
+  renderProjectContext(pumpProjectContext, project);
   setToggleValue("application", selection.application);
   setToggleValue("certification", selection.certification);
   setToggleValue("orientation", selection.orientation);
@@ -348,7 +346,7 @@ function saveActiveProject() {
   renderProjects();
   renderProjectContext(projectContext, project);
   renderProjectContext(mediaProjectContext, project);
-  renderProjectContext(previewProjectContext, project);
+  renderProjectContext(pumpProjectContext, project);
   updateSidebar(getVisiblePage());
 }
 
@@ -362,33 +360,13 @@ function getVisiblePage() {
   if (!datasetsPage.classList.contains("is-hidden")) return "datasets";
   if (!selectorPage.classList.contains("is-hidden")) return "selector";
   if (!mediaPage.classList.contains("is-hidden")) return "media";
-  if (!previewPage.classList.contains("is-hidden")) return "preview";
+  if (!pumpPage.classList.contains("is-hidden")) return "pump";
   return "login";
 }
 
-async function renderPreview(project) {
+async function renderPumpPage(project) {
   const selection = { ...createBlankSelection(), ...(project.selection || {}) };
-  const flowText = selection.flow?.source
-    ? `${selection.flow.lmin || "-"} l/min | ${selection.flow.lhour || "-"} l/h | ${selection.flow.m3hour || "-"} m3/h`
-    : "Not specified";
-
-  const rows = [
-    ["Customer", project.customer],
-    ["Project name", project.name],
-    ["Medium", project.medium || "-"],
-    ["Application", labelValue(selection.application)],
-    ["Certification", labelValue(selection.certification)],
-    ["Orientation", labelValue(selection.orientation)],
-    ["Flow rate", flowText],
-    ["Pressure", `${selection.pressure || 0} bar`],
-    ["Abrasivity", selection.abrasivity || "Not specified"],
-    ["Viscosity", selection.viscosity || "Not specified"],
-  ];
-
-  previewList.innerHTML = rows
-    .map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`)
-    .join("");
-
+  renderProjectContext(pumpProjectContext, project);
   await renderPumpResults(selection);
 }
 
@@ -802,10 +780,10 @@ sidebarSteps.forEach((step) => {
     const page = step.dataset.page;
     if (!["projects", "datasets"].includes(page) && !getActiveProject()) return;
     if (page === "media" && !validateTypeValues()) return;
-    if (page === "preview" && getActiveProject() && !validateMediaValues()) return;
-    if (page === "preview" && getActiveProject()) {
+    if (page === "pump" && getActiveProject() && !validateMediaValues()) return;
+    if (page === "pump" && getActiveProject()) {
       saveActiveProject();
-      renderPreview(getActiveProject());
+      renderPumpPage(getActiveProject());
     }
     if (page === "media" || page === "selector") saveActiveProject();
     showPage(page);
@@ -845,13 +823,7 @@ projectsTableBody.addEventListener("click", (event) => {
 
   const projectId = button.dataset.id;
   const action = button.dataset.action;
-
-  if (action === "preview") {
-    openProject(projectId, "preview");
-    return;
-  }
-
-  if (action === "edit") {
+if (action === "edit") {
     openProject(projectId, "selector");
     return;
   }
@@ -891,11 +863,11 @@ backToTypeBtn.addEventListener("click", () => {
   showPage("selector");
 });
 
-goToPreviewBtn.addEventListener("click", () => {
+goToPumpBtn.addEventListener("click", () => {
   if (!validateMediaValues()) return;
   saveActiveProject();
-  renderPreview(getActiveProject());
-  showPage("preview");
+  renderPumpPage(getActiveProject());
+  showPage("pump");
 });
 
 backToMediaBtn.addEventListener("click", () => {
@@ -1033,6 +1005,8 @@ if (hasSavedSession()) {
 } else {
   showPage("login");
 }
+
+
 
 
 
