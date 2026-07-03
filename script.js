@@ -27,6 +27,7 @@ const projectForm = document.querySelector("#projectForm");
 const cancelProjectBtn = document.querySelector("#cancelProjectBtn");
 const customerInput = document.querySelector("#customerInput");
 const projectNameInput = document.querySelector("#projectNameInput");
+const mediumInput = document.querySelector("#mediumInput");
 const backToProjectsBtn = document.querySelector("#backToProjectsBtn");
 const goToMediaBtn = document.querySelector("#goToMediaBtn");
 const saveProjectBtn = document.querySelector("#saveProjectBtn");
@@ -209,6 +210,7 @@ function renderProjects() {
       <td>${formatDate(project.updatedAt || project.createdAt)}</td>
       <td>${escapeHtml(project.customer)}</td>
       <td class="project-name-cell">${escapeHtml(project.name)}</td>
+      <td>${escapeHtml(project.medium || "-")}</td>
       <td><span class="status-pill">${project.status}</span></td>
       <td>
         <div class="row-actions">
@@ -256,6 +258,7 @@ function renderProjectContext(target, project) {
   target.innerHTML = `
     <span>Customer: <strong>${escapeHtml(project.customer)}</strong></span>
     <span>Project: <strong>${escapeHtml(project.name)}</strong></span>
+    <span>Medium: <strong>${escapeHtml(project.medium || "-")}</strong></span>
     <span>Status: <strong>${project.status}</strong></span>
   `;
 }
@@ -369,6 +372,7 @@ function renderPreview(project) {
   const rows = [
     ["Customer", project.customer],
     ["Project name", project.name],
+    ["Medium", project.medium || "-"],
     ["Application", labelValue(selection.application)],
     ["Certification", labelValue(selection.certification)],
     ["Orientation", labelValue(selection.orientation)],
@@ -676,6 +680,7 @@ projectForm.addEventListener("submit", (event) => {
     updatedAt: new Date().toISOString(),
     customer: customerInput.value.trim(),
     name: projectNameInput.value.trim(),
+    medium: mediumInput.value.trim(),
     status: "In progress",
     selection: createBlankSelection(),
   };
@@ -881,6 +886,7 @@ if (hasSavedSession()) {
 } else {
   showPage("login");
 }
+
 
 
 
