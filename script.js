@@ -391,7 +391,7 @@ async function renderPumpResults(selection) {
 }
 
 async function calculatePumpResultsFromSupabase(selection) {
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/calculate_pump_results`, {
+  const response = await authenticatedFetch(`${SUPABASE_URL}/rest/v1/rpc/calculate_pump_results`, {
     method: "POST",
     headers: apiHeaders(),
     body: JSON.stringify({
@@ -429,7 +429,7 @@ async function loadCalculationDatasets() {
   const keys = ["pump_limits", "efficiency", "rpm_formula", "abb_vis"];
   const entries = await Promise.all(keys.map(async (key) => {
     const config = getDatasetConfig(key);
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/${config.table}?${getDatasetQuery(config)}`, {
+    const response = await authenticatedFetch(`${SUPABASE_URL}/rest/v1/${config.table}?${getDatasetQuery(config)}`, {
       headers: apiHeaders(false),
     });
     if (!response.ok) throw new Error(`Dataset failed: ${key}`);
@@ -593,7 +593,7 @@ async function loadUserRole(userId) {
     return currentUserRole;
   }
 
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=role,is_active&limit=1`, {
+  const response = await authenticatedFetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=role,is_active&limit=1`, {
     headers: apiHeaders(false),
   });
   const rows = await response.json().catch(() => []);
@@ -654,12 +654,13 @@ async function loadDataset(key) {
   datasetStatus.textContent = "Loading dataset...";
   editedDatasetRows.clear();
 
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/${config.table}?${getDatasetQuery(config)}`, {
+  const response = await authenticatedFetch(`${SUPABASE_URL}/rest/v1/${config.table}?${getDatasetQuery(config)}`, {
     headers: apiHeaders(false),
   });
 
   if (!response.ok) {
-    datasetStatus.textContent = "Dataset could not be loaded.";
+    const error = await response.json().catch(() => ({}));
+    datasetStatus.textContent = error.message || "Dataset could not be loaded.";
     return;
   }
 
@@ -730,7 +731,7 @@ saveDatasetBtn.addEventListener("click", async () => {
 
     if (Object.keys(payload).length === 0) continue;
 
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/${config.table}?${datasetRowFilter(config, row)}`, {
+    const response = await authenticatedFetch(`${SUPABASE_URL}/rest/v1/${config.table}?${datasetRowFilter(config, row)}`, {
       method: "PATCH",
       headers: { ...apiHeaders(), Prefer: "return=minimal" },
       body: JSON.stringify(payload),
@@ -1037,6 +1038,8 @@ if (hasSavedSession()) {
 } else {
   showPage("login");
 }
+
+
 
 
 
