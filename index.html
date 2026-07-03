@@ -316,20 +316,19 @@
                 <span>Data</span>
                 <h2>Datasets</h2>
               </div>
-              <p class="dataset-note">Dataset tables will be shown here after the Excel data is imported to Supabase.</p>
-              <div class="dataset-permission-grid">
-                <div>
-                  <strong>Admin editor</strong>
-                  <span>Can view and update dataset values.</span>
-                </div>
-                <div>
-                  <strong>Internal viewer</strong>
-                  <span>Can view datasets but cannot edit them.</span>
-                </div>
-                <div>
-                  <strong>Partner user</strong>
-                  <span>Cannot access this page.</span>
-                </div>
+
+              <div class="dataset-tabs" id="datasetTabs" aria-label="Dataset tabs"></div>
+
+              <div class="dataset-table-shell">
+                <table class="dataset-table" id="datasetTable">
+                  <thead id="datasetTableHead"></thead>
+                  <tbody id="datasetTableBody"></tbody>
+                </table>
+              </div>
+
+              <div class="dataset-actions">
+                <p class="dataset-status" id="datasetStatus">Select a dataset.</p>
+                <button class="primary-action compact-action" type="button" id="saveDatasetBtn">Save changes</button>
               </div>
             </article>
           </section>
@@ -361,6 +360,7 @@
     <script src="script.js"></script>
   </body>
 </html>
+
 
 
 

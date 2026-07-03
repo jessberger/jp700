@@ -5,6 +5,12 @@ const selectorPage = document.querySelector("#selectorPage");
 const mediaPage = document.querySelector("#mediaPage");
 const previewPage = document.querySelector("#previewPage");
 const datasetsPage = document.querySelector("#datasetsPage");
+const datasetTabs = document.querySelector("#datasetTabs");
+const datasetTableHead = document.querySelector("#datasetTableHead");
+const datasetTableBody = document.querySelector("#datasetTableBody");
+const datasetStatus = document.querySelector("#datasetStatus");
+const saveDatasetBtn = document.querySelector("#saveDatasetBtn");
+
 const authForm = document.querySelector("#authForm");
 const usernameInput = document.querySelector("#usernameInput");
 const passwordInput = document.querySelector("#passwordInput");
@@ -49,10 +55,59 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const PROJECTS_KEY = "jp700_projects";
 const ACTIVE_PROJECT_KEY = "jp700_active_project_id";
 const USER_EMAIL_KEY = "jp700_user_email";
+const USER_ID_KEY = "jp700_user_id";
+const USER_ROLE_KEY = "jp700_user_role";
 
 let projects = loadProjects();
 let activeProjectId = localStorage.getItem(ACTIVE_PROJECT_KEY) || null;
 let isHydratingProject = false;
+let currentUserRole = localStorage.getItem(USER_ROLE_KEY) || "non_viewer";
+let activeDatasetKey = "pump_limits";
+let datasetRows = [];
+let datasetOriginalRows = [];
+let editedDatasetRows = new Map();
+const DATASET_CONFIG = [
+  { key: "pump_limits", label: "1.Pump_limits", table: "pump_limits", primaryKey: ["pump_code"], columns: [
+    { key: "pump_code", label: "Pump code", type: "text", locked: true },
+    { key: "stage", label: "Stage", type: "integer" },
+    { key: "max_rotation", label: "Max rotation", type: "number" },
+    { key: "section_number", label: "Section number", type: "integer" },
+    { key: "installation", label: "Installation", type: "text" },
+  ]},
+  { key: "jp_codes", label: "2.JP_Codes", table: "jp_codes", primaryKey: ["pump_family"], columns: [
+    { key: "pump_family", label: "Pump family", type: "text", locked: true },
+    { key: "type", label: "Type", type: "text" },
+    { key: "installation", label: "Installation", type: "text" },
+  ]},
+  { key: "sr_codes", label: "3.SR_Codes", table: "sr_codes", primaryKey: ["pump_model"], columns: [
+    { key: "pump_model", label: "Pump model", type: "text", locked: true },
+    { key: "phase", label: "Phase", type: "text" },
+    { key: "rotation", label: "Rotation", type: "text" },
+  ]},
+  { key: "abb_vis", label: "4.Abb_Vis", table: "abb_vis", primaryKey: ["section"], columns: [
+    { key: "section", label: "Section", type: "integer", locked: true },
+    { key: "abr_1", label: "Abr 1", type: "number" },
+    { key: "abr_2", label: "Abr 2", type: "number" },
+    { key: "abr_3", label: "Abr 3", type: "number" },
+    { key: "abr_4", label: "Abr 4", type: "number" },
+    { key: "vis_1", label: "Vis 1", type: "number" },
+    { key: "vis_2", label: "Vis 2", type: "number" },
+    { key: "vis_3", label: "Vis 3", type: "number" },
+    { key: "vis_4", label: "Vis 4", type: "number" },
+  ]},
+  { key: "efficiency", label: "5.Efficiency", table: "efficiency", primaryKey: ["pump_code", "pressure_bar"], columns: [
+    { key: "pump_code", label: "Pump code", type: "text", locked: true },
+    { key: "pressure_bar", label: "Pressure bar", type: "integer", locked: true },
+    { key: "efficiency", label: "Efficiency", type: "number" },
+  ]},
+  { key: "rpm_formula", label: "6.RPM_Formula", table: "rpm_formula", primaryKey: ["pump_code"], columns: [
+    { key: "pump_code", label: "Pump code", type: "text", locked: true },
+    { key: "constant", label: "Constant", type: "number" },
+    { key: "eccentricity", label: "Eccentricity", type: "number" },
+    { key: "rotor_diameter", label: "Rotor diameter", type: "number" },
+    { key: "stator_pitch", label: "Stator pitch", type: "number" },
+  ]},
+];
 
 function setFormState(isLoading, message) {
   submitButton.disabled = isLoading;
@@ -71,6 +126,9 @@ function showPage(page) {
   previewPage.classList.toggle("is-hidden", page !== "preview");
   datasetsPage.classList.toggle("is-hidden", page !== "datasets");
   workspaceShell.dataset.page = page;
+  workspaceShell.classList.toggle("can-view-datasets", canViewDatasets());
+  workspaceShell.classList.toggle("can-edit-datasets", canEditDatasets());
+  if (page === "datasets") loadDataset(activeDatasetKey);
   updateSidebar(page);
 }
 
@@ -79,9 +137,11 @@ function updateSidebar(activePage) {
   sidebarSteps.forEach((step) => {
     const page = step.dataset.page;
     step.classList.toggle("is-active", page === activePage);
-    step.disabled = page !== "projects" && !hasProject;
+    step.disabled = page !== "projects" && page !== "datasets" && !hasProject;
   });
   signedInEmail.textContent = localStorage.getItem(USER_EMAIL_KEY) || "Signed in";
+  workspaceShell.classList.toggle("can-view-datasets", canViewDatasets());
+  workspaceShell.classList.toggle("can-edit-datasets", canEditDatasets());
 }
 
 function hasSavedSession() {
@@ -347,6 +407,171 @@ function validateMediaValues() {
   }
   return true;
 }
+function canViewDatasets() {
+  return currentUserRole === "admin" || currentUserRole === "viewer";
+}
+
+function canEditDatasets() {
+  return currentUserRole === "admin";
+}
+
+function getAccessToken() {
+  return localStorage.getItem("jp700_access_token") || "";
+}
+
+function apiHeaders(includeJson = true) {
+  const headers = {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${getAccessToken()}`,
+  };
+  if (includeJson) headers["Content-Type"] = "application/json";
+  return headers;
+}
+
+async function loadUserRole(userId) {
+  if (!userId) {
+    currentUserRole = localStorage.getItem(USER_ROLE_KEY) || "non_viewer";
+    return currentUserRole;
+  }
+
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=role,is_active&limit=1`, {
+    headers: apiHeaders(false),
+  });
+  const rows = await response.json().catch(() => []);
+  const profile = rows[0];
+  currentUserRole = profile?.is_active === false ? "non_viewer" : profile?.role || "non_viewer";
+  localStorage.setItem(USER_ROLE_KEY, currentUserRole);
+  return currentUserRole;
+}
+
+function getDatasetConfig(key = activeDatasetKey) {
+  return DATASET_CONFIG.find((config) => config.key === key) || DATASET_CONFIG[0];
+}
+
+function renderDatasetTabs() {
+  datasetTabs.innerHTML = DATASET_CONFIG.map((config) => `
+    <button class="dataset-tab ${config.key === activeDatasetKey ? "is-active" : ""}" type="button" data-dataset="${config.key}">
+      ${config.label}
+    </button>
+  `).join("");
+}
+
+function renderDatasetTable(config) {
+  const editable = canEditDatasets();
+  datasetTableHead.innerHTML = `<tr>${config.columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join("")}</tr>`;
+  datasetTableBody.innerHTML = datasetRows.map((row, rowIndex) => `
+    <tr>
+      ${config.columns.map((column) => {
+        const disabled = !editable || column.locked;
+        const value = row[column.key] ?? "";
+        return `<td><input ${disabled ? "disabled" : ""} data-row="${rowIndex}" data-column="${column.key}" value="${escapeHtml(value)}" /></td>`;
+      }).join("")}
+    </tr>
+  `).join("");
+
+  datasetStatus.textContent = editable
+    ? `${datasetRows.length} rows loaded. Edit cells and save changes.`
+    : `${datasetRows.length} rows loaded. Read-only access.`;
+}
+
+async function loadDataset(key) {
+  if (!canViewDatasets()) {
+    datasetStatus.textContent = "You do not have access to datasets.";
+    datasetTableHead.innerHTML = "";
+    datasetTableBody.innerHTML = "";
+    return;
+  }
+
+  activeDatasetKey = key;
+  const config = getDatasetConfig(key);
+  renderDatasetTabs();
+  datasetStatus.textContent = "Loading dataset...";
+  editedDatasetRows.clear();
+
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/${config.table}?select=*`, {
+    headers: apiHeaders(false),
+  });
+
+  if (!response.ok) {
+    datasetStatus.textContent = "Dataset could not be loaded.";
+    return;
+  }
+
+  datasetRows = await response.json();
+  datasetOriginalRows = JSON.parse(JSON.stringify(datasetRows));
+  renderDatasetTable(config);
+}
+
+function parseDatasetValue(value, column) {
+  if (value === "") return null;
+  if (column.type === "integer") return Number.parseInt(value, 10);
+  if (column.type === "number") return Number(value);
+  return value;
+}
+
+function datasetRowFilter(config, row) {
+  return config.primaryKey
+    .map((key) => `${key}=eq.${encodeURIComponent(row[key])}`)
+    .join("&");
+}
+
+datasetTabs.addEventListener("click", (event) => {
+  const button = event.target.closest(".dataset-tab");
+  if (!button) return;
+  loadDataset(button.dataset.dataset);
+});
+
+datasetTableBody.addEventListener("input", (event) => {
+  const input = event.target.closest("input[data-row][data-column]");
+  if (!input || !canEditDatasets()) return;
+
+  const rowIndex = Number(input.dataset.row);
+  const columnKey = input.dataset.column;
+  const config = getDatasetConfig();
+  const column = config.columns.find((item) => item.key === columnKey);
+  if (!column || column.locked) return;
+
+  datasetRows[rowIndex][columnKey] = parseDatasetValue(input.value, column);
+  editedDatasetRows.set(rowIndex, true);
+  input.classList.add("is-edited");
+  datasetStatus.textContent = `${editedDatasetRows.size} row(s) changed.`;
+});
+
+saveDatasetBtn.addEventListener("click", async () => {
+  if (!canEditDatasets() || editedDatasetRows.size === 0) return;
+
+  const config = getDatasetConfig();
+  datasetStatus.textContent = "Saving changes...";
+
+  for (const rowIndex of editedDatasetRows.keys()) {
+    const row = datasetRows[rowIndex];
+    const originalRow = datasetOriginalRows[rowIndex];
+    const payload = {};
+
+    config.columns.forEach((column) => {
+      if (!column.locked && row[column.key] !== originalRow[column.key]) {
+        payload[column.key] = row[column.key];
+      }
+    });
+
+    if (Object.keys(payload).length === 0) continue;
+
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/${config.table}?${datasetRowFilter(config, row)}`, {
+      method: "PATCH",
+      headers: { ...apiHeaders(), Prefer: "return=minimal" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      datasetStatus.textContent = "Save failed. Please check permissions and values.";
+      return;
+    }
+  }
+
+  editedDatasetRows.clear();
+  await loadDataset(activeDatasetKey);
+  datasetStatus.textContent = "Changes saved.";
+});
 
 authForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -370,6 +595,8 @@ authForm.addEventListener("submit", async (event) => {
     localStorage.setItem("jp700_access_token", result.access_token);
     localStorage.setItem("jp700_refresh_token", result.refresh_token);
     localStorage.setItem(USER_EMAIL_KEY, email);
+    localStorage.setItem(USER_ID_KEY, result.user?.id || "");
+    await loadUserRole(result.user?.id);
     signedInEmail.textContent = email;
     setFormState(false, "Signed in successfully.");
     renderProjects();
@@ -383,6 +610,12 @@ logoutBtn.addEventListener("click", () => {
   localStorage.removeItem("jp700_access_token");
   localStorage.removeItem("jp700_refresh_token");
   localStorage.removeItem(USER_EMAIL_KEY);
+  localStorage.removeItem(USER_ID_KEY);
+  localStorage.removeItem(USER_ROLE_KEY);
+  currentUserRole = "non_viewer";
+  localStorage.removeItem(USER_ID_KEY);
+  localStorage.removeItem(USER_ROLE_KEY);
+  currentUserRole = "non_viewer";
   localStorage.removeItem(ACTIVE_PROJECT_KEY);
   activeProjectId = null;
   passwordInput.value = "";
@@ -618,11 +851,11 @@ pressureInput.addEventListener("input", () => setPressure(pressureInput.value));
 renderProjects();
 if (hasSavedSession()) {
   signedInEmail.textContent = localStorage.getItem(USER_EMAIL_KEY) || "Signed in";
+  workspaceShell.classList.toggle("can-view-datasets", canViewDatasets());
+  workspaceShell.classList.toggle("can-edit-datasets", canEditDatasets());
   showPage("projects");
 } else {
   showPage("login");
 }
-
-
 
 

@@ -1127,3 +1127,118 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+
+.dataset-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(134, 153, 172, 0.22);
+}
+
+.dataset-tab {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(0, 92, 168, 0.16);
+  border-radius: 7px;
+  color: var(--blue-dark);
+  background: rgba(255, 255, 255, 0.74);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.dataset-tab.is-active {
+  color: #fff;
+  border-color: rgba(0, 92, 168, 0.66);
+  background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+}
+
+.dataset-table-shell {
+  max-height: 58vh;
+  overflow: auto;
+  border: 1px solid rgba(216, 224, 231, 0.86);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.dataset-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
+.dataset-table th,
+.dataset-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(216, 224, 231, 0.78);
+  border-right: 1px solid rgba(216, 224, 231, 0.5);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dataset-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: var(--muted);
+  background: #f5f9fd;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.dataset-table input {
+  width: 100%;
+  min-width: 90px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--steel);
+  background: transparent;
+  padding: 7px 8px;
+  outline: none;
+}
+
+.dataset-table input:not(:disabled):focus {
+  border-color: var(--blue);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 92, 168, 0.11);
+}
+
+.dataset-table input:disabled {
+  color: #5f6f7d;
+}
+
+.dataset-table input.is-edited {
+  border-color: rgba(215, 25, 32, 0.32);
+  background: rgba(215, 25, 32, 0.05);
+}
+
+.dataset-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.dataset-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.workspace-shell:not(.can-view-datasets) .dataset-step {
+  display: none;
+}
+
+.workspace-shell:not(.can-edit-datasets) #saveDatasetBtn {
+  display: none;
+}
+
+@media (max-width: 620px) {
+  .dataset-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
