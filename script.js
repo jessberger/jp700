@@ -67,24 +67,24 @@ let datasetRows = [];
 let datasetOriginalRows = [];
 let editedDatasetRows = new Map();
 const DATASET_CONFIG = [
-  { key: "pump_limits", label: "1.Pump_limits", table: "pump_limits", primaryKey: ["pump_code"], columns: [
+  { key: "pump_limits", label: "1.Pump_limits", table: "pump_limits", primaryKey: ["pump_code"], orderBy: ["pump_code"], columns: [
     { key: "pump_code", label: "Pump code", type: "text", locked: true },
     { key: "stage", label: "Stage", type: "integer" },
     { key: "max_rotation", label: "Max rotation", type: "number" },
     { key: "section_number", label: "Section number", type: "integer" },
     { key: "installation", label: "Installation", type: "text" },
   ]},
-  { key: "jp_codes", label: "2.JP_Codes", table: "jp_codes", primaryKey: ["pump_family"], columns: [
+  { key: "jp_codes", label: "2.JP_Codes", table: "jp_codes", primaryKey: ["pump_family"], orderBy: ["pump_family"], columns: [
     { key: "pump_family", label: "Pump family", type: "text", locked: true },
     { key: "type", label: "Type", type: "text" },
     { key: "installation", label: "Installation", type: "text" },
   ]},
-  { key: "sr_codes", label: "3.SR_Codes", table: "sr_codes", primaryKey: ["pump_model"], columns: [
+  { key: "sr_codes", label: "3.SR_Codes", table: "sr_codes", primaryKey: ["pump_model"], orderBy: ["pump_model"], columns: [
     { key: "pump_model", label: "Pump model", type: "text", locked: true },
     { key: "phase", label: "Phase", type: "text" },
     { key: "rotation", label: "Rotation", type: "text" },
   ]},
-  { key: "abb_vis", label: "4.Abb_Vis", table: "abb_vis", primaryKey: ["section"], columns: [
+  { key: "abb_vis", label: "4.Abb_Vis", table: "abb_vis", primaryKey: ["section"], orderBy: ["section"], columns: [
     { key: "section", label: "Section", type: "integer", locked: true },
     { key: "abr_1", label: "Abr 1", type: "number" },
     { key: "abr_2", label: "Abr 2", type: "number" },
@@ -95,12 +95,12 @@ const DATASET_CONFIG = [
     { key: "vis_3", label: "Vis 3", type: "number" },
     { key: "vis_4", label: "Vis 4", type: "number" },
   ]},
-  { key: "efficiency", label: "5.Efficiency", table: "efficiency", primaryKey: ["pump_code", "pressure_bar"], columns: [
+  { key: "efficiency", label: "5.Efficiency", table: "efficiency", primaryKey: ["pump_code", "pressure_bar"], orderBy: ["pump_code", "pressure_bar"], columns: [
     { key: "pump_code", label: "Pump code", type: "text", locked: true },
     { key: "pressure_bar", label: "Pressure bar", type: "integer", locked: true },
     { key: "efficiency", label: "Efficiency", type: "number" },
   ]},
-  { key: "rpm_formula", label: "6.RPM_Formula", table: "rpm_formula", primaryKey: ["pump_code"], columns: [
+  { key: "rpm_formula", label: "6.RPM_Formula", table: "rpm_formula", primaryKey: ["pump_code"], orderBy: ["pump_code"], columns: [
     { key: "pump_code", label: "Pump code", type: "text", locked: true },
     { key: "constant", label: "Constant", type: "number" },
     { key: "eccentricity", label: "Eccentricity", type: "number" },
@@ -448,6 +448,13 @@ function getDatasetConfig(key = activeDatasetKey) {
   return DATASET_CONFIG.find((config) => config.key === key) || DATASET_CONFIG[0];
 }
 
+function getDatasetQuery(config) {
+  const orderQuery = (config.orderBy || config.primaryKey)
+    .map((column) => `order=${column}.asc`)
+    .join("&");
+  return `select=*&${orderQuery}`;
+}
+
 function renderDatasetTabs() {
   datasetTabs.innerHTML = DATASET_CONFIG.map((config) => `
     <button class="dataset-tab ${config.key === activeDatasetKey ? "is-active" : ""}" type="button" data-dataset="${config.key}">
@@ -488,7 +495,7 @@ async function loadDataset(key) {
   datasetStatus.textContent = "Loading dataset...";
   editedDatasetRows.clear();
 
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/${config.table}?select=*`, {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/${config.table}?${getDatasetQuery(config)}`, {
     headers: apiHeaders(false),
   });
 
