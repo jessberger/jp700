@@ -382,13 +382,45 @@ async function renderPumpResults(selection) {
   pumpResultsStatus.textContent = "Loading pump data...";
 
   try {
-    const data = await loadCalculationDatasets();
-    const rows = calculatePumpResults(selection, data);
+    const rows = await calculatePumpResultsFromSupabase(selection);
     pumpResultsStatus.textContent = `${rows.length} pump code(s) calculated.`;
     pumpResultsTableBody.innerHTML = rows.map(renderPumpResultRow).join("");
   } catch (error) {
-    pumpResultsStatus.textContent = "Pump data could not be loaded.";
+    pumpResultsStatus.textContent = error.message || "Pump calculation failed.";
   }
+}
+
+async function calculatePumpResultsFromSupabase(selection) {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/calculate_pump_results`, {
+    method: "POST",
+    headers: apiHeaders(),
+    body: JSON.stringify({
+      flow_lmin: Number(selection.flow?.lmin) || 0,
+      pressure_bar: Number(selection.pressure) || 0,
+      orientation: selection.orientation || "vertical",
+      abrasivity_group: getGroupNumber(selection.abrasivity),
+      viscosity_group: getGroupNumber(selection.viscosity),
+    }),
+  });
+
+  const result = await response.json().catch(() => null);
+  if (!response.ok) {
+    const message = result?.message || result?.hint || "Pump data could not be loaded.";
+    throw new Error(message);
+  }
+
+  return (result || []).map((row) => ({
+    pumpCode: row.pump_code,
+    isSelectable: Boolean(row.is_selectable),
+    requiredRpm: Number(row.required_rpm),
+    abrRpm: Number(row.rpm_abrasivity),
+    visRpm: Number(row.rpm_viscosity),
+    maximumRpm: row.maximum_rpm == null ? null : {
+      value: Number(row.maximum_rpm),
+      source: row.maximum_source,
+      percent: Number(row.maximum_percent),
+    },
+  }));
 }
 
 async function loadCalculationDatasets() {
@@ -1005,6 +1037,8 @@ if (hasSavedSession()) {
 } else {
   showPage("login");
 }
+
+
 
 
 
