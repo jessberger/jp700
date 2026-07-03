@@ -296,6 +296,28 @@
               <dl class="preview-list" id="previewList"></dl>
             </article>
 
+            <article class="selection-card pump-results-card">
+              <div class="card-heading">
+                <span>Pump Calculation</span>
+                <h2>Available Pump Codes</h2>
+              </div>
+              <p class="pump-results-status" id="pumpResultsStatus">Enter type, flow, pressure and media values to calculate pump speeds.</p>
+              <div class="pump-results-table-shell">
+                <table class="pump-results-table">
+                  <thead>
+                    <tr>
+                      <th>Pump code</th>
+                      <th>Required RPM</th>
+                      <th>RPM - Abrasivity</th>
+                      <th>RPM - Viscosity</th>
+                      <th>Maximum RPM</th>
+                    </tr>
+                  </thead>
+                  <tbody id="pumpResultsTableBody"></tbody>
+                </table>
+              </div>
+            </article>
+
             <div class="page-actions final-actions">
               <button class="ghost-action page-action-left" type="button" id="backToMediaBtn">Back</button>
               <button class="primary-action compact-action page-action-right" type="button" id="saveAndCloseBtn">Save and close</button>
@@ -365,6 +387,8 @@
     <script src="script.js?v=20260703-sort"></script>
   </body>
 </html>
+
+
 
 
 

@@ -40,6 +40,8 @@ const projectContext = document.querySelector("#projectContext");
 const mediaProjectContext = document.querySelector("#mediaProjectContext");
 const previewProjectContext = document.querySelector("#previewProjectContext");
 const previewList = document.querySelector("#previewList");
+const pumpResultsStatus = document.querySelector("#pumpResultsStatus");
+const pumpResultsTableBody = document.querySelector("#pumpResultsTableBody");
 const toggleGroups = document.querySelectorAll(".segmented-control");
 const mediaGroups = document.querySelectorAll(".option-stack");
 const flowInputs = {
@@ -67,6 +69,7 @@ let activeDatasetKey = "pump_limits";
 let datasetRows = [];
 let datasetOriginalRows = [];
 let editedDatasetRows = new Map();
+let calculationDatasetCache = null;
 const DATASET_CONFIG = [
   { key: "pump_limits", label: "1.Pump_limits", table: "pump_limits", primaryKey: ["pump_code"], orderBy: ["sort_order", "pump_code"], columns: [
     { key: "pump_code", label: "Pump code", type: "text", locked: true },
@@ -363,7 +366,7 @@ function getVisiblePage() {
   return "login";
 }
 
-function renderPreview(project) {
+async function renderPreview(project) {
   const selection = { ...createBlankSelection(), ...(project.selection || {}) };
   const flowText = selection.flow?.source
     ? `${selection.flow.lmin || "-"} l/min | ${selection.flow.lhour || "-"} l/h | ${selection.flow.m3hour || "-"} m3/h`
@@ -385,6 +388,148 @@ function renderPreview(project) {
   previewList.innerHTML = rows
     .map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`)
     .join("");
+
+  await renderPumpResults(selection);
+}
+
+async function renderPumpResults(selection) {
+  if (!pumpResultsTableBody || !pumpResultsStatus) return;
+
+  pumpResultsTableBody.innerHTML = "";
+  if (!selection.flow?.source || !selection.abrasivity || !selection.viscosity) {
+    pumpResultsStatus.textContent = "Enter type, flow, pressure and media values to calculate pump speeds.";
+    return;
+  }
+
+  pumpResultsStatus.textContent = "Loading pump data...";
+
+  try {
+    const data = await loadCalculationDatasets();
+    const rows = calculatePumpResults(selection, data);
+    pumpResultsStatus.textContent = `${rows.length} pump code(s) calculated.`;
+    pumpResultsTableBody.innerHTML = rows.map(renderPumpResultRow).join("");
+  } catch (error) {
+    pumpResultsStatus.textContent = "Pump data could not be loaded.";
+  }
+}
+
+async function loadCalculationDatasets() {
+  if (calculationDatasetCache) return calculationDatasetCache;
+
+  const keys = ["pump_limits", "efficiency", "rpm_formula", "abb_vis"];
+  const entries = await Promise.all(keys.map(async (key) => {
+    const config = getDatasetConfig(key);
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/${config.table}?${getDatasetQuery(config)}`, {
+      headers: apiHeaders(false),
+    });
+    if (!response.ok) throw new Error(`Dataset failed: ${key}`);
+    return [key, await response.json()];
+  }));
+
+  calculationDatasetCache = Object.fromEntries(entries);
+  return calculationDatasetCache;
+}
+
+function calculatePumpResults(selection, data) {
+  const pressure = Number(selection.pressure) || 0;
+  const flowLMin = Number(selection.flow?.lmin) || 0;
+  const abrKey = `abr_${getGroupNumber(selection.abrasivity)}`;
+  const visKey = `vis_${getGroupNumber(selection.viscosity)}`;
+  const efficiencyByPumpPressure = createLookup(data.efficiency || [], (row) => `${normalizeCode(row.pump_code)}|${Number(row.pressure_bar)}`);
+  const formulaByPump = createLookup(data.rpm_formula || [], (row) => normalizeCode(row.pump_code));
+  const abbVisBySection = createLookup(data.abb_vis || [], (row) => Number(row.section));
+
+  return [...(data.pump_limits || [])].map((pump) => {
+    const pumpCode = normalizeCode(pump.pump_code);
+    const formula = formulaByPump.get(pumpCode);
+    const efficiencyRow = efficiencyByPumpPressure.get(`${pumpCode}|${pressure}`);
+    const mediaRow = abbVisBySection.get(Number(pump.section_number));
+    const isSelectable = isPumpSelectable(selection.orientation, pump.installation);
+    const efficiency = Number(efficiencyRow?.efficiency);
+    const requiredRpm = calculateRequiredRpm(flowLMin, efficiency, formula);
+    const abrRpm = Number(mediaRow?.[abrKey]);
+    const visRpm = Number(mediaRow?.[visKey]);
+    const maximumRpm = calculateMaximumRpm(abrRpm, visRpm);
+
+    return {
+      pumpCode,
+      isSelectable,
+      requiredRpm,
+      abrRpm,
+      visRpm,
+      maximumRpm,
+    };
+  });
+}
+
+function createLookup(rows, keyGetter) {
+  return new Map(rows.map((row) => [keyGetter(row), row]));
+}
+
+function normalizeCode(value) {
+  return String(value ?? "").trim();
+}
+
+function getGroupNumber(value) {
+  return Number(String(value || "").match(/Group\s+(\d)/i)?.[1]) || 0;
+}
+
+function isPumpSelectable(selectedOrientation, installation) {
+  const orientation = String(selectedOrientation || "").toLowerCase();
+  const installText = String(installation || "").toLowerCase();
+  if (orientation === "vertical") return installText.includes("vertikal") || installText.includes("vertical");
+  return installText.includes("horizontal");
+}
+
+function calculateRequiredRpm(flowLMin, efficiency, formula) {
+  if (!formula || !Number.isFinite(flowLMin) || !Number.isFinite(efficiency) || efficiency <= 0) return null;
+  const factors = [formula.constant, formula.eccentricity, formula.rotor_diameter, formula.stator_pitch]
+    .map(Number);
+  if (factors.some((value) => !Number.isFinite(value) || value === 0)) return null;
+  const denominator = factors.reduce((total, value) => total * value, 1) * efficiency;
+  return (flowLMin / denominator) / 1000;
+}
+
+function calculateMaximumRpm(abrRpm, visRpm) {
+  if (!Number.isFinite(abrRpm) || !Number.isFinite(visRpm)) return null;
+  const source = abrRpm <= visRpm ? "Abr" : "Vis";
+  const base = source === "Abr" ? abrRpm : visRpm;
+  const percent = getMaximumIncreasePercent(base);
+  return {
+    value: base * (1 + percent / 100),
+    source,
+    percent,
+  };
+}
+
+function getMaximumIncreasePercent(value) {
+  if (value <= 100) return 50;
+  if (value <= 250) return 30;
+  if (value <= 500) return 20;
+  if (value <= 1000) return 10;
+  return 5;
+}
+
+function renderPumpResultRow(row) {
+  return `
+    <tr class="${row.isSelectable ? "" : "is-unavailable"}">
+      <td>${escapeHtml(row.pumpCode)}</td>
+      <td>${formatRpm(row.requiredRpm)}</td>
+      <td>${formatRpm(row.abrRpm)}</td>
+      <td>${formatRpm(row.visRpm)}</td>
+      <td>${formatMaximumRpm(row.maximumRpm)}</td>
+    </tr>
+  `;
+}
+
+function formatRpm(value) {
+  if (!Number.isFinite(value)) return "Missing data";
+  return Number(value).toLocaleString("en-US", { maximumFractionDigits: 2 });
+}
+
+function formatMaximumRpm(result) {
+  if (!result) return "Missing data";
+  return `${formatRpm(result.value)} (${result.source} ${result.percent}%)`;
 }
 
 function labelValue(value) {
@@ -510,6 +655,7 @@ async function loadDataset(key) {
 
   datasetRows = await response.json();
   datasetOriginalRows = JSON.parse(JSON.stringify(datasetRows));
+  calculationDatasetCache = null;
   renderDatasetTable(config);
 }
 
@@ -590,6 +736,7 @@ saveDatasetBtn.addEventListener("click", async () => {
   }
 
   editedDatasetRows.clear();
+  calculationDatasetCache = null;
   await loadDataset(activeDatasetKey);
   datasetStatus.classList.add("is-success");
   datasetStatus.textContent = "Saved.";
@@ -886,6 +1033,8 @@ if (hasSavedSession()) {
 } else {
   showPage("login");
 }
+
+
 
 
 
