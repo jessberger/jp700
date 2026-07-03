@@ -67,7 +67,7 @@ let datasetRows = [];
 let datasetOriginalRows = [];
 let editedDatasetRows = new Map();
 const DATASET_CONFIG = [
-  { key: "pump_limits", label: "1.Pump_limits", table: "pump_limits", primaryKey: ["pump_code"], orderBy: ["pump_code"], columns: [
+  { key: "pump_limits", label: "1.Pump_limits", table: "pump_limits", primaryKey: ["pump_code"], orderBy: ["sort_order", "pump_code"], columns: [
     { key: "pump_code", label: "Pump code", type: "text", locked: true },
     { key: "stage", label: "Stage", type: "integer" },
     { key: "max_rotation", label: "Max rotation", type: "number" },
@@ -95,12 +95,12 @@ const DATASET_CONFIG = [
     { key: "vis_3", label: "Vis 3", type: "number" },
     { key: "vis_4", label: "Vis 4", type: "number" },
   ]},
-  { key: "efficiency", label: "5.Efficiency", table: "efficiency", primaryKey: ["pump_code", "pressure_bar"], orderBy: ["pump_code", "pressure_bar"], columns: [
+  { key: "efficiency", label: "5.Efficiency", table: "efficiency", primaryKey: ["pump_code", "pressure_bar"], orderBy: ["sort_order", "pump_code", "pressure_bar"], columns: [
     { key: "pump_code", label: "Pump code", type: "text", locked: true },
     { key: "pressure_bar", label: "Pressure bar", type: "integer", locked: true },
     { key: "efficiency", label: "Efficiency", type: "number" },
   ]},
-  { key: "rpm_formula", label: "6.RPM_Formula", table: "rpm_formula", primaryKey: ["pump_code"], orderBy: ["pump_code"], columns: [
+  { key: "rpm_formula", label: "6.RPM_Formula", table: "rpm_formula", primaryKey: ["pump_code"], orderBy: ["sort_order", "pump_code"], columns: [
     { key: "pump_code", label: "Pump code", type: "text", locked: true },
     { key: "constant", label: "Constant", type: "number" },
     { key: "eccentricity", label: "Eccentricity", type: "number" },
@@ -450,9 +450,9 @@ function getDatasetConfig(key = activeDatasetKey) {
 
 function getDatasetQuery(config) {
   const orderQuery = (config.orderBy || config.primaryKey)
-    .map((column) => `order=${column}.asc`)
-    .join("&");
-  return `select=*&${orderQuery}`;
+    .map((column) => `${column}.asc.nullslast`)
+    .join(",");
+  return `select=*&order=${orderQuery}`;
 }
 
 function renderDatasetTabs() {
@@ -864,5 +864,7 @@ if (hasSavedSession()) {
 } else {
   showPage("login");
 }
+
+
 
 
