@@ -545,9 +545,16 @@ datasetTableBody.addEventListener("input", (event) => {
 });
 
 saveDatasetBtn.addEventListener("click", async () => {
-  if (!canEditDatasets() || editedDatasetRows.size === 0) return;
+  if (!canEditDatasets() || editedDatasetRows.size === 0) {
+    datasetStatus.textContent = "No changes to save.";
+    return;
+  }
 
   const config = getDatasetConfig();
+  const originalButtonText = saveDatasetBtn.textContent;
+  saveDatasetBtn.disabled = true;
+  saveDatasetBtn.textContent = "Saving...";
+  datasetStatus.classList.remove("is-success", "is-error");
   datasetStatus.textContent = "Saving changes...";
 
   for (const rowIndex of editedDatasetRows.keys()) {
@@ -570,14 +577,24 @@ saveDatasetBtn.addEventListener("click", async () => {
     });
 
     if (!response.ok) {
+      datasetStatus.classList.add("is-error");
       datasetStatus.textContent = "Save failed. Please check permissions and values.";
+      saveDatasetBtn.disabled = false;
+      saveDatasetBtn.textContent = originalButtonText;
       return;
     }
   }
 
   editedDatasetRows.clear();
   await loadDataset(activeDatasetKey);
-  datasetStatus.textContent = "Changes saved.";
+  datasetStatus.classList.add("is-success");
+  datasetStatus.textContent = "Saved.";
+  saveDatasetBtn.textContent = "Saved";
+  window.setTimeout(() => {
+    saveDatasetBtn.disabled = false;
+    saveDatasetBtn.textContent = originalButtonText;
+    datasetStatus.classList.remove("is-success");
+  }, 1200);
 });
 
 authForm.addEventListener("submit", async (event) => {
@@ -864,6 +881,7 @@ if (hasSavedSession()) {
 } else {
   showPage("login");
 }
+
 
 
 

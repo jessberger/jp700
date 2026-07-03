@@ -1318,3 +1318,13 @@ h1 {
 .dataset-status {
   font-size: 12px;
 }
+
+.dataset-status.is-success {
+  color: #19724f;
+  font-weight: 800;
+}
+
+.dataset-status.is-error {
+  color: #a40f15;
+  font-weight: 800;
+}
