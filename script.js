@@ -587,6 +587,43 @@ function apiHeaders(includeJson = true) {
   return headers;
 }
 
+async function refreshSession() {
+  const refreshToken = localStorage.getItem("jp700_refresh_token");
+  if (!refreshToken) throw new Error("Session expired. Please sign in again.");
+
+  const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+    method: "POST",
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  });
+
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(result.error_description || result.msg || "Session expired. Please sign in again.");
+  }
+
+  localStorage.setItem("jp700_access_token", result.access_token);
+  if (result.refresh_token) localStorage.setItem("jp700_refresh_token", result.refresh_token);
+  return result.access_token;
+}
+
+async function authenticatedFetch(url, options = {}, retry = true) {
+  const headers = new Headers(options.headers || {});
+  headers.set("apikey", SUPABASE_ANON_KEY);
+  headers.set("Authorization", `Bearer ${getAccessToken()}`);
+
+  const response = await fetch(url, { ...options, headers });
+  if (response.status !== 401 || !retry) return response;
+
+  await refreshSession();
+  headers.set("Authorization", `Bearer ${getAccessToken()}`);
+  return fetch(url, { ...options, headers });
+}
+
 async function loadUserRole(userId) {
   if (!userId) {
     currentUserRole = localStorage.getItem(USER_ROLE_KEY) || "non_viewer";
@@ -788,7 +825,7 @@ authForm.addEventListener("submit", async (event) => {
     renderProjects();
     showPage("projects");
   } catch (error) {
-    setFormState(false, "Connection failed. Check the Supabase URL and anon key for this project.");
+    setFormState(false, error.message || "Connection failed. Check the Supabase URL and anon key for this project.");
   }
 });
 
@@ -1038,6 +1075,8 @@ if (hasSavedSession()) {
 } else {
   showPage("login");
 }
+
+
 
 
 
