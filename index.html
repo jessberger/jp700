@@ -64,6 +64,7 @@
             <button class="sidebar-step workflow-step" type="button" data-page="pump">Pump Selection</button>
             <button class="sidebar-step workflow-step" type="button" data-page="family">Pump Family</button>
             <button class="sidebar-step workflow-step" type="button" data-page="model">Pump Model</button>
+            <button class="sidebar-step workflow-step" type="button" data-page="config">Configuration</button>
           </nav>
         </div>
 
@@ -388,6 +389,34 @@
 
             <div class="page-actions final-actions">
               <button class="ghost-action page-action-left" type="button" id="backToFamilyBtn">Back</button>
+              <button class="primary-action compact-action page-action-center" type="button" id="saveModelBtn">Save</button>
+              <button class="primary-action compact-action page-action-right" type="button" id="goToConfigBtn">Next</button>
+            </div>
+          </section>
+        </section>
+
+        <section class="selector-page is-hidden" id="configPage">
+          <header class="selector-header">
+            <a class="selector-logo" href="./" aria-label="Jessberger home">
+              <img src="images/logo.png" alt="Jessberger" />
+            </a>
+            <h1>Eccentric Screw Pump Selector</h1>
+          </header>
+
+          <section class="selector-workspace" aria-label="Pump configuration">
+            <div class="project-context" id="configProjectContext"></div>
+            <article class="selection-card pump-results-card">
+              <div class="card-heading">
+                <span>08</span>
+                <h2>Configuration</h2>
+              </div>
+              <dl class="selection-summary" id="configSummary"></dl>
+              <div class="configuration-code" id="configurationCode"></div>
+              <div class="configuration-options" id="configurationOptions"></div>
+            </article>
+
+            <div class="page-actions final-actions">
+              <button class="ghost-action page-action-left" type="button" id="backToModelBtn">Back</button>
               <button class="primary-action compact-action page-action-right" type="button" id="saveAndCloseBtn">Save and close</button>
             </div>
           </section>
@@ -455,9 +484,10 @@
       </form>
     </div>
 
-    <script src="script.js?v=20260707-family-model2"></script>
+    <script src="script.js?v=20260707-config-options"></script>
   </body>
 </html>
+
 
 
 

@@ -6,6 +6,7 @@ const mediaPage = document.querySelector("#mediaPage");
 const pumpPage = document.querySelector("#pumpPage");
 const familyPage = document.querySelector("#familyPage");
 const modelPage = document.querySelector("#modelPage");
+const configPage = document.querySelector("#configPage");
 const datasetsPage = document.querySelector("#datasetsPage");
 const datasetTabs = document.querySelector("#datasetTabs");
 const datasetTableHead = document.querySelector("#datasetTableHead");
@@ -44,12 +45,16 @@ const backToPumpBtn = document.querySelector("#backToPumpBtn");
 const saveFamilyBtn = document.querySelector("#saveFamilyBtn");
 const goToModelBtn = document.querySelector("#goToModelBtn");
 const backToFamilyBtn = document.querySelector("#backToFamilyBtn");
+const saveModelBtn = document.querySelector("#saveModelBtn");
+const goToConfigBtn = document.querySelector("#goToConfigBtn");
+const backToModelBtn = document.querySelector("#backToModelBtn");
 const saveAndCloseBtn = document.querySelector("#saveAndCloseBtn");
 const projectContext = document.querySelector("#projectContext");
 const mediaProjectContext = document.querySelector("#mediaProjectContext");
 const pumpProjectContext = document.querySelector("#pumpProjectContext");
 const familyProjectContext = document.querySelector("#familyProjectContext");
 const modelProjectContext = document.querySelector("#modelProjectContext");
+const configProjectContext = document.querySelector("#configProjectContext");
 const pumpResultsStatus = document.querySelector("#pumpResultsStatus");
 const pumpResultsTableBody = document.querySelector("#pumpResultsTableBody");
 const familySummary = document.querySelector("#familySummary");
@@ -58,6 +63,9 @@ const familyTableBody = document.querySelector("#familyTableBody");
 const modelSummary = document.querySelector("#modelSummary");
 const modelStatus = document.querySelector("#modelStatus");
 const modelTableBody = document.querySelector("#modelTableBody");
+const configSummary = document.querySelector("#configSummary");
+const configurationCode = document.querySelector("#configurationCode");
+const configurationOptions = document.querySelector("#configurationOptions");
 const toggleGroups = document.querySelectorAll(".segmented-control");
 const mediaGroups = document.querySelectorAll(".option-stack");
 const flowInputs = {
@@ -129,6 +137,39 @@ const DATASET_CONFIG = [
   ]},
 ];
 
+const CONFIG_OPTION_GROUPS = [
+  [
+    { key: "SUCTION_HEAD", options: ["Flooded", "Non-Flooded"] },
+    { key: "OPERATION_TYPE", options: ["Continuous", "Intermittently"] },
+  ],
+  [
+    { key: "PUMP_CASING", options: ["Stainless Steel AISI 316Ti", "Stainless Steel AISI 316", "Stainless Steel AISI 431", "Cast iron GG25"] },
+    { key: "LANTERN", options: ["Flexible Coupling (ATEX)", "Stainless Steel AISI 316Ti", "Stainless Steel AISI 304", "Aluminum", "Speed reducer 1:16"] },
+    { key: "ROTOR", options: ["Stainless Steel AISI 316Ti", "Stainless Steel AISI 316Ti Hard chrome plated", "Stainless Steel AISI D6 Hardened", "Stainless Steel AISI 440B Hardened"] },
+    { key: "ROTATING_PARTS", options: ["Stainless Steel AISI 316Ti", "Stainless Steel AISI 431", "Stainless Steel AISI 316", "Hardened"] },
+    { key: "JOINTS", options: ["Torsionshaft", "Open pin joint (FDA)", "Sealed pin joint"] },
+  ],
+  [
+    { key: "CASING_SEALING", options: ["NBR (FDA)", "NBR light (FDA)", "EPDM (FDA)", "EPDM light (FDA)", "PTFE", "FKM"] },
+    { key: "STATOR", options: ["NBR (FDA)", "NBR light (FDA)", "EPDM (FDA)", "EPDM light (FDA)", "PTFE", "FKM"] },
+    { key: "SHAFT_SEALING", options: ["Carbon/SiC/FKM", "SiC/SiC/FKM Chamfered", "SiC/SiC/FKM", "PS Lip Seal PTFE", "Carbon/SiC/FKM encapsulated", "SiC/SiC/NBR", "SiC/SiC/EPDM", "SiC/SiC/FEP", "ATEX Carbon/SiC/FKM"] },
+    { key: "DIRECTION_OF_ROTATION", options: ["Clockwise", "Counterclockwise"] },
+  ],
+  [
+    { key: "IMMERSION_TUBE_LENGTH", options: ["700 mm", "800 mm", "900 mm", "1000 mm", "1100 mm", "1200 mm", "1300 mm", "1400 mm"] },
+    { key: "IMMERSION_TUBE_DIA", options: ["54 mm", "89 mm", "105 mm", "130 mm"] },
+  ],
+  [
+    { key: "SUCTION_PORT", options: ["IG 1¼\"", "IG 1\"", "IG ¾''", "IG ½''", "AG 1½''", "DN 40 Tri-Clamp", "DN 40 - DIN 11851", "DN 15 - DIN 11851", "DN 50 - DIN 11851", "DN 65 - DIN 11851", "DN 80 - DIN 11851"] },
+    { key: "DELIVERY_PORT", options: ["IG 1¼\"", "IG 1\"", "IG ¾''", "IG ½''", "AG 1½''", "DN 40 Tri-Clamp", "DN 40 - DIN 11851", "DN 15 - DIN 11851", "DN 50 - DIN 11851", "DN 65 - DIN 11851", "DN 80 - DIN 11851"] },
+    { key: "HOSE_CONNECTION", options: ["Hose connection 1\" / 1¼\" / 1½\"", "Hose connection DN40 to 1\" / 1¼\" / 1½\"", "Hose connection Clamp DN40", "Hose connection DN50", "Hose connection DN65", "Hose connection DN80"] },
+  ],
+  [
+    { key: "VARNISH", options: ["RAL 5010", "RAL 1015 NSDF3+", "RAL 7024"] },
+    { key: "PTC", options: ["3x155°C", "3x130°C"] },
+  ],
+];
+
 function setFormState(isLoading, message) {
   submitButton.disabled = isLoading;
   submitButton.textContent = isLoading ? "Signing in" : "Sign in";
@@ -146,6 +187,7 @@ function showPage(page) {
   pumpPage.classList.toggle("is-hidden", page !== "pump");
   familyPage.classList.toggle("is-hidden", page !== "family");
   modelPage.classList.toggle("is-hidden", page !== "model");
+  configPage.classList.toggle("is-hidden", page !== "config");
   datasetsPage.classList.toggle("is-hidden", page !== "datasets");
   workspaceShell.dataset.page = page;
   workspaceShell.classList.toggle("can-view-datasets", canViewDatasets());
@@ -209,6 +251,7 @@ function createBlankSelection() {
     selectedPump: null,
     selectedFamily: null,
     selectedModel: null,
+    configOptions: {},
   };
 }
 
@@ -267,6 +310,7 @@ function openProject(projectId, targetPage = "selector") {
   if (targetPage === "pump") renderPumpPage(project);
   if (targetPage === "family") renderFamilyPage(project);
   if (targetPage === "model") renderModelPage(project);
+  if (targetPage === "config") renderConfigPage(project);
   showPage(targetPage);
 }
 
@@ -317,6 +361,7 @@ function hydrateProject(project) {
   renderProjectContext(pumpProjectContext, project);
   renderProjectContext(familyProjectContext, project);
   renderProjectContext(modelProjectContext, project);
+  renderProjectContext(configProjectContext, project);
   setToggleValue("application", selection.application);
   setToggleValue("certification", selection.certification);
   setToggleValue("orientation", selection.orientation);
@@ -393,6 +438,7 @@ function getVisiblePage() {
   if (!pumpPage.classList.contains("is-hidden")) return "pump";
   if (!familyPage.classList.contains("is-hidden")) return "family";
   if (!modelPage.classList.contains("is-hidden")) return "model";
+  if (!configPage.classList.contains("is-hidden")) return "config";
   return "login";
 }
 
@@ -734,6 +780,56 @@ function isRotationCompatible(rotationText, requiredRpm) {
   return Number.isFinite(value) && Math.round(rpm) === value;
 }
 
+function renderConfigPage(project) {
+  const selection = { ...createBlankSelection(), ...(project.selection || {}) };
+  renderProjectContext(configProjectContext, project);
+  const extraRows = [];
+  if (selection.selectedFamily) extraRows.push(["06 Pump family", selection.selectedFamily.pump_family]);
+  if (selection.selectedModel) extraRows.push(["07 Pump Model", selection.selectedModel.pump_model]);
+  renderSelectionSummary(configSummary, selection, extraRows);
+  configurationCode.textContent = getConfigurationCode(selection);
+  configurationOptions.innerHTML = CONFIG_OPTION_GROUPS
+    .map((group, groupIndex) => renderConfigGroup(group, groupIndex, selection.configOptions || {}))
+    .join("");
+}
+
+function getConfigurationCode(selection) {
+  const family = selection.selectedFamily?.pump_family || "";
+  const pump = selection.selectedPump?.pumpCode || "";
+  const model = selection.selectedModel?.pump_model || "";
+  return `${family}.${pump} ${model}`.trim();
+}
+
+function renderConfigGroup(group, groupIndex, selectedOptions) {
+  return `
+    <section class="config-option-group">
+      <div class="config-group-label">Group ${groupIndex + 1}</div>
+      ${group.map((item, itemIndex) => renderConfigVariable(item, groupIndex, itemIndex, selectedOptions)).join("")}
+    </section>
+  `;
+}
+
+function renderConfigVariable(item, groupIndex, itemIndex, selectedOptions) {
+  const variableNo = `08.${groupIndex + 1}.${itemIndex + 1}`;
+  return `
+    <div class="config-variable" data-variable="${escapeHtml(item.key)}">
+      <div class="config-variable-title">
+        <span>${escapeHtml(variableNo)}</span>
+        <strong>${escapeHtml(item.key)}</strong>
+      </div>
+      <div class="config-option-grid">
+        ${item.options.map((option, optionIndex) => {
+          const selected = selectedOptions[item.key] === option;
+          return `<button class="config-option-btn ${selected ? "is-active" : ""}" type="button" data-variable="${escapeHtml(item.key)}" data-option="${escapeHtml(option)}">
+            <small>${optionIndex + 1}</small>
+            <span>${escapeHtml(option)}</span>
+          </button>`;
+        }).join("")}
+      </div>
+    </div>
+  `;
+}
+
 function labelValue(value) {
   return String(value || "")
     .split("-")
@@ -773,6 +869,16 @@ function validateFamilySelection() {
   const project = getActiveProject();
   if (!project?.selection?.selectedFamily) {
     window.alert("Please select a pump family before continuing.");
+    return false;
+  }
+  return true;
+}
+
+function validateModelSelection() {
+  if (!validateFamilySelection()) return false;
+  const project = getActiveProject();
+  if (!project?.selection?.selectedModel) {
+    window.alert("Please select a pump model before continuing.");
     return false;
   }
   return true;
@@ -1076,6 +1182,11 @@ sidebarSteps.forEach((step) => {
       saveActiveProject();
       renderModelPage(getActiveProject());
     }
+    if (page === "config" && getActiveProject() && !validateModelSelection()) return;
+    if (page === "config" && getActiveProject()) {
+      saveActiveProject();
+      renderConfigPage(getActiveProject());
+    }
     if (page === "media" || page === "selector") saveActiveProject();
     showPage(page);
   });
@@ -1190,6 +1301,18 @@ backToFamilyBtn.addEventListener("click", () => {
   showPage("family");
 });
 
+goToConfigBtn.addEventListener("click", () => {
+  if (!validateModelSelection()) return;
+  saveActiveProject();
+  renderConfigPage(getActiveProject());
+  showPage("config");
+});
+
+backToModelBtn.addEventListener("click", () => {
+  renderModelPage(getActiveProject());
+  showPage("model");
+});
+
 saveAndCloseBtn.addEventListener("click", () => {
   saveActiveProject();
   renderProjects();
@@ -1208,6 +1331,7 @@ saveProjectBtn.addEventListener("click", () => flashSaved(saveProjectBtn));
 saveMediaBtn.addEventListener("click", () => flashSaved(saveMediaBtn));
 savePumpBtn.addEventListener("click", () => flashSaved(savePumpBtn));
 saveFamilyBtn.addEventListener("click", () => flashSaved(saveFamilyBtn));
+saveModelBtn.addEventListener("click", () => flashSaved(saveModelBtn));
 
 pumpResultsTableBody.addEventListener("click", (event) => {
   const rowElement = event.target.closest("tr.is-selectable[data-pump-code]");
@@ -1264,6 +1388,24 @@ modelTableBody.addEventListener("click", (event) => {
   };
   saveProjects();
   renderModelPage(project);
+});
+
+configurationOptions.addEventListener("click", (event) => {
+  const button = event.target.closest(".config-option-btn");
+  if (!button) return;
+  const project = getActiveProject();
+  if (!project) return;
+
+  const selection = { ...createBlankSelection(), ...(project.selection || {}) };
+  project.selection = {
+    ...selection,
+    configOptions: {
+      ...(selection.configOptions || {}),
+      [button.dataset.variable]: button.dataset.option,
+    },
+  };
+  saveProjects();
+  renderConfigPage(project);
 });
 
 toggleGroups.forEach((group) => {
