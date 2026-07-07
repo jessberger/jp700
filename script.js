@@ -27,6 +27,7 @@ const projectForm = document.querySelector("#projectForm");
 const cancelProjectBtn = document.querySelector("#cancelProjectBtn");
 const customerInput = document.querySelector("#customerInput");
 const projectNameInput = document.querySelector("#projectNameInput");
+const offerNoInput = document.querySelector("#offerNoInput");
 const mediumInput = document.querySelector("#mediumInput");
 const backToProjectsBtn = document.querySelector("#backToProjectsBtn");
 const goToMediaBtn = document.querySelector("#goToMediaBtn");
@@ -48,9 +49,7 @@ const flowInputs = {
   lhour: document.querySelector("#flowLHour"),
   m3hour: document.querySelector("#flowM3Hour"),
 };
-const pressureSlider = document.querySelector("#pressureSlider");
-const pressureInput = document.querySelector("#pressureInput");
-const pressureTicks = document.querySelector("#pressureTicks");
+const pressureGroup = document.querySelector("[data-pressure-group]");
 
 const SUPABASE_URL = "https://kkzoldapwrsffhhqkuxi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtrem9sZGFwd3JzZmZoaHFrdXhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI4NTk0ODMsImV4cCI6MjA5ODQzNTQ4M30.vhKBIxVfixfAYVJ-tednebgwi-RggFCkCcb1aCMKDaA";
@@ -180,11 +179,11 @@ function saveProjects() {
 
 function createBlankSelection() {
   return {
-    application: "food",
-    certification: "atex",
+    application: "non-food",
+    certification: "non-atex",
     orientation: "vertical",
     flow: { source: "", lmin: "", lhour: "", m3hour: "" },
-    pressure: 0,
+    pressure: 6,
     abrasivity: "",
     viscosity: "",
   };
@@ -212,6 +211,7 @@ function renderProjects() {
       <td>${formatDate(project.updatedAt || project.createdAt)}</td>
       <td>${escapeHtml(project.customer)}</td>
       <td class="project-name-cell">${escapeHtml(project.name)}</td>
+      <td>${escapeHtml(project.offerNo || "-")}</td>
       <td>${escapeHtml(project.medium || "-")}</td>
       <td><span class="status-pill">${project.status}</span></td>
       <td>
@@ -259,6 +259,7 @@ function renderProjectContext(target, project) {
   target.innerHTML = `
     <span>Customer: <strong>${escapeHtml(project.customer)}</strong></span>
     <span>Project: <strong>${escapeHtml(project.name)}</strong></span>
+    <span>Offer No: <strong>${escapeHtml(project.offerNo || "-")}</strong></span>
     <span>Medium: <strong>${escapeHtml(project.medium || "-")}</strong></span>
     <span>Status: <strong>${project.status}</strong></span>
   `;
@@ -307,7 +308,7 @@ function hydrateProject(project) {
     updateFlowFrom(source, false);
   }
 
-  setPressure(selection.pressure ?? 0, false);
+  setPressure(selection.pressure ?? 6, false);
   isHydratingProject = false;
 }
 
@@ -329,7 +330,7 @@ function collectSelection() {
       lhour: flowInputs.lhour.value,
       m3hour: flowInputs.m3hour.value,
     },
-    pressure: Number(pressureInput.value) || 0,
+    pressure: getPressureValue(),
     abrasivity: getMedia("abrasivity") || "",
     viscosity: getMedia("viscosity") || "",
   };
@@ -383,8 +384,9 @@ async function renderPumpResults(selection) {
 
   try {
     const rows = await calculatePumpResultsFromSupabase(selection);
-    pumpResultsStatus.textContent = `${rows.length} pump code(s) calculated.`;
-    pumpResultsTableBody.innerHTML = rows.map(renderPumpResultRow).join("");
+    const visibleRows = rows.filter((row) => row.matchesPressureStage);
+    pumpResultsStatus.textContent = `${visibleRows.length} pump code(s) calculated.`;
+    pumpResultsTableBody.innerHTML = visibleRows.map(renderPumpResultRow).join("");
   } catch (error) {
     pumpResultsStatus.textContent = error.message || "Pump calculation failed.";
   }
@@ -415,6 +417,7 @@ async function calculatePumpResultsFromSupabase(selection) {
     requiredRpm: Number(row.required_rpm),
     abrRpm: Number(row.rpm_abrasivity),
     visRpm: Number(row.rpm_viscosity),
+    matchesPressureStage: Boolean(row.matches_pressure_stage ?? true),
     maximumRpm: row.maximum_rpm == null ? null : {
       value: Number(row.maximum_rpm),
       source: row.maximum_source,
@@ -875,6 +878,7 @@ projectForm.addEventListener("submit", (event) => {
     updatedAt: new Date().toISOString(),
     customer: customerInput.value.trim(),
     name: projectNameInput.value.trim(),
+    offerNo: offerNoInput.value.trim(),
     medium: mediumInput.value.trim(),
     status: "In progress",
     selection: createBlankSelection(),
@@ -1043,28 +1047,23 @@ Object.entries(flowInputs).forEach(([key, input]) => {
   input.addEventListener("input", () => updateFlowFrom(key));
 });
 
-function clampPressure(value) {
-  const number = Number(value);
-  if (!Number.isFinite(number)) return 0;
-  return Math.max(0, Math.min(24, Math.round(number)));
-}
-
 function setPressure(value, shouldSave = true) {
-  const clamped = clampPressure(value);
-  pressureSlider.value = String(clamped);
-  pressureInput.value = String(clamped);
+  const pressure = [6, 12, 24].includes(Number(value)) ? Number(value) : 6;
+  pressureGroup.querySelectorAll("[data-pressure]").forEach((button) => {
+    button.classList.toggle("is-active", Number(button.dataset.pressure) === pressure);
+  });
   if (shouldSave) autosaveActiveProject();
 }
 
-for (let value = 0; value <= 24; value += 1) {
-  const tick = document.createElement("span");
-  tick.className = "pressure-tick";
-  tick.textContent = String(value);
-  pressureTicks.appendChild(tick);
+function getPressureValue() {
+  return Number(pressureGroup.querySelector("[data-pressure].is-active")?.dataset.pressure) || 6;
 }
 
-pressureSlider.addEventListener("input", () => setPressure(pressureSlider.value));
-pressureInput.addEventListener("input", () => setPressure(pressureInput.value));
+pressureGroup.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-pressure]");
+  if (!button) return;
+  setPressure(button.dataset.pressure);
+});
 
 renderProjects();
 if (hasSavedSession()) {

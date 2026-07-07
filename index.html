@@ -98,9 +98,10 @@
                 <table class="projects-table">
                   <thead>
                     <tr>
-                      <th>Date</th>
+                      <th>Start date</th>
                       <th>Customer</th>
                       <th>Project name</th>
+                      <th>Offer No</th>
                       <th>Medium</th>
                       <th>Status</th>
                       <th>Actions</th>
@@ -135,16 +136,16 @@
                 <fieldset class="toggle-group">
                   <legend>Application</legend>
                   <div class="segmented-control" data-toggle-group="application">
-                    <button type="button" class="toggle-option is-active" data-value="food">Food</button>
-                    <button type="button" class="toggle-option" data-value="non-food">Non-Food</button>
+                    <button type="button" class="toggle-option is-active" data-value="non-food">Non-Food</button>
+                    <button type="button" class="toggle-option" data-value="food">Food</button>
                   </div>
                 </fieldset>
 
                 <fieldset class="toggle-group">
                   <legend>Certification</legend>
                   <div class="segmented-control" data-toggle-group="certification">
-                    <button type="button" class="toggle-option is-active" data-value="atex">ATEX</button>
-                    <button type="button" class="toggle-option" data-value="non-atex">Non-ATEX</button>
+                    <button type="button" class="toggle-option is-active" data-value="non-atex">Non-ATEX</button>
+                    <button type="button" class="toggle-option" data-value="atex">ATEX</button>
                   </div>
                 </fieldset>
 
@@ -186,16 +187,10 @@
                 <h2>Pressure</h2>
               </div>
 
-              <div class="pressure-control">
-                <div class="pressure-track-wrap">
-                  <input id="pressureSlider" type="range" min="0" max="24" step="1" value="0" />
-                  <div class="pressure-ticks" id="pressureTicks" aria-hidden="true"></div>
-                </div>
-
-                <label class="pressure-value">
-                  bar
-                  <input id="pressureInput" type="number" min="0" max="24" step="1" value="0" />
-                </label>
+              <div class="pressure-choice segmented-control" data-pressure-group>
+                <button type="button" class="toggle-option is-active" data-pressure="6">6 bar</button>
+                <button type="button" class="toggle-option" data-pressure="12">12 bar</button>
+                <button type="button" class="toggle-option" data-pressure="24">24 bar</button>
               </div>
             </article>
 
@@ -365,6 +360,10 @@
           <input id="projectNameInput" type="text" autocomplete="off" required />
         </label>
         <label>
+          Offer No
+          <input id="offerNoInput" type="text" autocomplete="off" required />
+        </label>
+        <label>
           Medium
           <input id="mediumInput" type="text" autocomplete="off" required />
         </label>
@@ -375,9 +374,10 @@
       </form>
     </div>
 
-    <script src="script.js?v=20260703-authfix"></script>
+    <script src="script.js?v=20260707-pressure"></script>
   </body>
 </html>
+
 
 
 
