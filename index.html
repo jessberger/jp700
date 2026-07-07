@@ -65,6 +65,7 @@
             <button class="sidebar-step workflow-step" type="button" data-page="family">Pump Family</button>
             <button class="sidebar-step workflow-step" type="button" data-page="model">Pump Model</button>
             <button class="sidebar-step workflow-step" type="button" data-page="config">Configuration</button>
+            <button class="sidebar-step workflow-step" type="button" data-page="pump-config">Pump Configuration</button>
           </nav>
         </div>
 
@@ -414,7 +415,7 @@
               <div class="configuration-options" id="configurationOptions"></div>
               <section class="configuration-next-panel" aria-label="Next pump package step">
                 <div class="config-group-label">Next</div>
-                <button class="primary-action compact-action motor-selection-action" type="button" id="goToMotorSelectionBtn">Go to motor selection</button>
+                <button class="primary-action compact-action motor-selection-action" type="button" id="goToPumpConfigurationBtn">Pump configuration</button>
               </section>
             </article>
 
@@ -422,6 +423,32 @@
               <button class="ghost-action page-action-left" type="button" id="backToModelBtn">Back</button>
               <button class="primary-action compact-action page-action-center" type="button" id="saveAndCloseBtn">Save</button>
               <button class="primary-action compact-action page-action-right" type="button" id="goToConfigNextBtn">Next</button>
+            </div>
+          </section>
+        </section>
+        <section class="selector-page is-hidden" id="pumpConfigPage">
+          <header class="selector-header">
+            <a class="selector-logo" href="./" aria-label="Jessberger home">
+              <img src="images/logo.png" alt="Jessberger" />
+            </a>
+            <h1>Eccentric Screw Pump Selector</h1>
+          </header>
+
+          <section class="selector-workspace" aria-label="Pump configuration summary">
+            <div class="project-context" id="pumpConfigProjectContext"></div>
+            <article class="selection-card pump-results-card">
+              <div class="card-heading">
+                <span>14</span>
+                <h2>Pump Configuration</h2>
+              </div>
+              <div class="configuration-code" id="pumpConfigCode"></div>
+              <div class="pump-configuration-grid" id="pumpConfigurationGrid"></div>
+              <button class="primary-action compact-action motor-selection-action" type="button" id="goToMotorSelectionBtn">Motor selection</button>
+            </article>
+
+            <div class="page-actions final-actions">
+              <button class="ghost-action page-action-left" type="button" id="backToConfigBtn">Back</button>
+              <button class="primary-action compact-action page-action-center" type="button" id="savePumpConfigBtn">Save</button>
             </div>
           </section>
         </section>
@@ -488,7 +515,7 @@
       </form>
     </div>
 
-    <script src="script.js?v=20260707-config-pages"></script>
+    <script src="script.js?v=20260707-pump-config-rules"></script>
   </body>
 </html>
 

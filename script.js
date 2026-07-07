@@ -7,6 +7,7 @@ const pumpPage = document.querySelector("#pumpPage");
 const familyPage = document.querySelector("#familyPage");
 const modelPage = document.querySelector("#modelPage");
 const configPage = document.querySelector("#configPage");
+const pumpConfigPage = document.querySelector("#pumpConfigPage");
 const datasetsPage = document.querySelector("#datasetsPage");
 const datasetTabs = document.querySelector("#datasetTabs");
 const datasetTableHead = document.querySelector("#datasetTableHead");
@@ -50,13 +51,17 @@ const goToConfigBtn = document.querySelector("#goToConfigBtn");
 const backToModelBtn = document.querySelector("#backToModelBtn");
 const saveAndCloseBtn = document.querySelector("#saveAndCloseBtn");
 const goToConfigNextBtn = document.querySelector("#goToConfigNextBtn");
+const goToPumpConfigurationBtn = document.querySelector("#goToPumpConfigurationBtn");
 const goToMotorSelectionBtn = document.querySelector("#goToMotorSelectionBtn");
+const backToConfigBtn = document.querySelector("#backToConfigBtn");
+const savePumpConfigBtn = document.querySelector("#savePumpConfigBtn");
 const projectContext = document.querySelector("#projectContext");
 const mediaProjectContext = document.querySelector("#mediaProjectContext");
 const pumpProjectContext = document.querySelector("#pumpProjectContext");
 const familyProjectContext = document.querySelector("#familyProjectContext");
 const modelProjectContext = document.querySelector("#modelProjectContext");
 const configProjectContext = document.querySelector("#configProjectContext");
+const pumpConfigProjectContext = document.querySelector("#pumpConfigProjectContext");
 const pumpResultsStatus = document.querySelector("#pumpResultsStatus");
 const pumpResultsTableBody = document.querySelector("#pumpResultsTableBody");
 const familySummary = document.querySelector("#familySummary");
@@ -69,6 +74,8 @@ const configStepNumber = document.querySelector("#configStepNumber");
 const configStepTitle = document.querySelector("#configStepTitle");
 const configurationCode = document.querySelector("#configurationCode");
 const configurationOptions = document.querySelector("#configurationOptions");
+const pumpConfigCode = document.querySelector("#pumpConfigCode");
+const pumpConfigurationGrid = document.querySelector("#pumpConfigurationGrid");
 const toggleGroups = document.querySelectorAll(".segmented-control");
 const mediaGroups = document.querySelectorAll(".option-stack");
 const flowInputs = {
@@ -97,6 +104,8 @@ let editedDatasetRows = new Map();
 let calculationDatasetCache = null;
 let latestPumpRows = [];
 let currentConfigGroupIndex = 0;
+let configurationRules = [];
+let configurationRulesLoaded = false;
 const DATASET_CONFIG = [
   { key: "pump_limits", label: "1.Pump_limits", table: "pump_limits", primaryKey: ["pump_code"], orderBy: ["sort_order", "pump_code"], columns: [
     { key: "pump_code", label: "Pump code", type: "text", locked: true },
@@ -140,6 +149,21 @@ const DATASET_CONFIG = [
     { key: "eccentricity", label: "Eccentricity", type: "number" },
     { key: "rotor_diameter", label: "Rotor diameter", type: "number" },
     { key: "stator_pitch", label: "Stator pitch", type: "number" },
+  ]},
+  { key: "configuration_rules", label: "7.Configuration_Rules", table: "configuration_rules", primaryKey: ["rule_id"], orderBy: ["rule_order", "rule_id"], columns: [
+    { key: "rule_id", label: "Rule ID", type: "integer", locked: true },
+    { key: "rule_order", label: "Order", type: "integer" },
+    { key: "is_active", label: "Active", type: "boolean" },
+    { key: "input_code", label: "Input code", type: "text" },
+    { key: "input_selection", label: "Input selection", type: "text" },
+    { key: "output_code_1", label: "Output code 1", type: "text" },
+    { key: "output_selection_1", label: "Output selection 1", type: "text" },
+    { key: "output_code_2", label: "Output code 2", type: "text" },
+    { key: "output_selection_2", label: "Output selection 2", type: "text" },
+    { key: "output_code_3", label: "Output code 3", type: "text" },
+    { key: "output_selection_3", label: "Output selection 3", type: "text" },
+    { key: "output_code_4", label: "Output code 4", type: "text" },
+    { key: "output_selection_4", label: "Output selection 4", type: "text" },
   ]},
 ];
 
@@ -212,6 +236,7 @@ function showPage(page) {
   familyPage.classList.toggle("is-hidden", page !== "family");
   modelPage.classList.toggle("is-hidden", page !== "model");
   configPage.classList.toggle("is-hidden", page !== "config");
+  pumpConfigPage.classList.toggle("is-hidden", page !== "pump-config");
   datasetsPage.classList.toggle("is-hidden", page !== "datasets");
   workspaceShell.dataset.page = page;
   workspaceShell.classList.toggle("can-view-datasets", canViewDatasets());
@@ -335,6 +360,7 @@ function openProject(projectId, targetPage = "selector") {
   if (targetPage === "family") renderFamilyPage(project);
   if (targetPage === "model") renderModelPage(project);
   if (targetPage === "config") renderConfigPage(project);
+  if (targetPage === "pump-config") renderPumpConfigurationPage(project);
   showPage(targetPage);
 }
 
@@ -463,6 +489,7 @@ function getVisiblePage() {
   if (!familyPage.classList.contains("is-hidden")) return "family";
   if (!modelPage.classList.contains("is-hidden")) return "model";
   if (!configPage.classList.contains("is-hidden")) return "config";
+  if (!pumpConfigPage.classList.contains("is-hidden")) return "pump-config";
   return "login";
 }
 
@@ -816,10 +843,76 @@ function renderConfigPage(project, groupIndex = currentConfigGroupIndex) {
   configStepNumber.textContent = stepNo;
   configStepTitle.textContent = group.title;
   configurationCode.textContent = getConfigurationCode(selection);
-  configurationOptions.innerHTML = renderConfigGroup(group, currentConfigGroupIndex, selection.configOptions || {});
+  configurationOptions.innerHTML = renderConfigGroup(group, currentConfigGroupIndex, selection.configOptions || {}, selection);
+  loadConfigurationRules().then(() => {
+    if (getVisiblePage() === "config") {
+      const latestProject = getActiveProject();
+      const latestSelection = { ...createBlankSelection(), ...(latestProject?.selection || {}) };
+      configurationOptions.innerHTML = renderConfigGroup(group, currentConfigGroupIndex, latestSelection.configOptions || {}, latestSelection);
+    }
+  });
   backToModelBtn.textContent = currentConfigGroupIndex === 0 ? "Back" : "Back";
   goToConfigNextBtn.classList.toggle("is-hidden", currentConfigGroupIndex === CONFIG_OPTION_GROUPS.length - 1);
-  goToMotorSelectionBtn.closest(".configuration-next-panel")?.classList.toggle("is-hidden", currentConfigGroupIndex !== CONFIG_OPTION_GROUPS.length - 1);
+  goToPumpConfigurationBtn.closest(".configuration-next-panel")?.classList.toggle("is-hidden", currentConfigGroupIndex !== CONFIG_OPTION_GROUPS.length - 1);
+}
+
+function renderPumpConfigurationPage(project) {
+  const selection = { ...createBlankSelection(), ...(project.selection || {}) };
+  renderProjectContext(pumpConfigProjectContext, project);
+  pumpConfigCode.textContent = getConfigurationCode(selection);
+  pumpConfigurationGrid.innerHTML = getPumpConfigurationGroups(selection)
+    .map((group) => renderPumpConfigurationGroup(group))
+    .join("");
+}
+
+function getPumpConfigurationGroups(selection) {
+  return [
+    {
+      title: "Project",
+      rows: [
+        ["Customer", getActiveProject()?.customer || "-"],
+        ["Project name", getActiveProject()?.name || "-"],
+        ["Offer No", getActiveProject()?.offerNo || "-"],
+        ["Medium", getActiveProject()?.medium || "-"],
+      ],
+    },
+    {
+      title: "Pump Basis",
+      rows: [
+        ["Type", `${labelValue(selection.application)} / ${labelValue(selection.certification)} / ${labelValue(selection.orientation)}`],
+        ["Flow rate", getEnteredFlowText(selection)],
+        ["Pressure", `${selection.pressure || 6} bar`],
+        ["Media Properties", `${selection.abrasivity || "-"} / ${selection.viscosity || "-"}`],
+      ],
+    },
+    {
+      title: "Pump Selection",
+      rows: [
+        ["Pump selection", selection.selectedPump?.pumpCode || "-"],
+        ["Required RPM", selection.selectedPump ? formatRpm(selection.selectedPump.requiredRpm) : "-"],
+        ["Pump family", cleanPumpFamilyCode(selection.selectedFamily?.pump_family || "-")],
+        ["Pump model", selection.selectedModel ? formatModelLabel(selection.selectedModel) : "-"],
+      ],
+    },
+    ...CONFIG_OPTION_GROUPS.map((group) => ({
+      title: group.title,
+      rows: group.items.map((item) => [item.key, selection.configOptions?.[item.key] || "-"]),
+    })),
+  ];
+}
+
+function renderPumpConfigurationGroup(group) {
+  return `
+    <section class="pump-configuration-group">
+      <h3>${escapeHtml(group.title)}</h3>
+      <dl>
+        ${group.rows.map(([label, value]) => `
+          <dt>${escapeHtml(label)}</dt>
+          <dd>${escapeHtml(value)}</dd>
+        `).join("")}
+      </dl>
+    </section>
+  `;
 }
 
 function getConfigurationCode(selection) {
@@ -856,17 +949,18 @@ function getConfigStepNumber(groupIndex) {
   return String(8 + groupIndex).padStart(2, "0");
 }
 
-function renderConfigGroup(group, groupIndex, selectedOptions) {
+function renderConfigGroup(group, groupIndex, selectedOptions, selection) {
   return `
     <section class="config-option-group">
       <div class="config-group-label">${escapeHtml(getConfigStepNumber(groupIndex))} / ${escapeHtml(group.title)}</div>
-      ${group.items.map((item, itemIndex) => renderConfigVariable(item, groupIndex, itemIndex, selectedOptions)).join("")}
+      ${group.items.map((item, itemIndex) => renderConfigVariable(item, groupIndex, itemIndex, selectedOptions, selection)).join("")}
     </section>
   `;
 }
 
-function renderConfigVariable(item, groupIndex, itemIndex, selectedOptions) {
-  const variableNo = `${getConfigStepNumber(groupIndex)}.${itemIndex + 1}`;
+function renderConfigVariable(item, groupIndex, itemIndex, selectedOptions, selection) {
+  const variableNo = getConfigVariableCode(groupIndex, itemIndex);
+  const allowedOptions = getAllowedOptionNumbers(variableNo, selection);
   return `
     <div class="config-variable" data-variable="${escapeHtml(item.key)}">
       <div class="config-variable-title">
@@ -875,15 +969,97 @@ function renderConfigVariable(item, groupIndex, itemIndex, selectedOptions) {
       </div>
       <div class="config-option-grid">
         ${item.options.map((option, optionIndex) => {
+          const optionNo = String(optionIndex + 1);
           const selected = selectedOptions[item.key] === option;
-          return `<button class="config-option-btn ${selected ? "is-active" : ""}" type="button" data-variable="${escapeHtml(item.key)}" data-option="${escapeHtml(option)}">
-            <small>${optionIndex + 1}</small>
+          const unavailable = allowedOptions && !allowedOptions.has(optionNo);
+          return `<button class="config-option-btn ${selected ? "is-active" : ""} ${unavailable ? "is-unavailable" : ""}" type="button" ${unavailable ? "disabled" : ""} data-variable="${escapeHtml(item.key)}" data-option="${escapeHtml(option)}">
+            <small>${optionNo}</small>
             <span>${escapeHtml(option)}</span>
           </button>`;
         }).join("")}
       </div>
     </div>
   `;
+}
+
+function getConfigVariableCode(groupIndex, itemIndex) {
+  return `${getConfigStepNumber(groupIndex)}.${itemIndex + 1}`;
+}
+
+async function loadConfigurationRules() {
+  if (configurationRulesLoaded) return configurationRules;
+  try {
+    const rows = await loadTableRows("configuration_rules");
+    configurationRules = rows.filter((row) => row.is_active !== false && row.is_active !== "false");
+  } catch (error) {
+    configurationRules = [];
+  }
+  configurationRulesLoaded = true;
+  return configurationRules;
+}
+
+function getAllowedOptionNumbers(outputCode, selection) {
+  let allowed = null;
+  configurationRules.forEach((rule) => {
+    if (!ruleMatchesInput(rule, selection)) return;
+    getRuleOutputs(rule)
+      .filter((output) => output.code === outputCode)
+      .forEach((output) => {
+        const outputSet = new Set(splitRuleValues(output.selection));
+        allowed = allowed ? intersectSets(allowed, outputSet) : outputSet;
+      });
+  });
+  return allowed;
+}
+
+function ruleMatchesInput(rule, selection) {
+  const currentValue = getRuleInputValue(rule.input_code, selection);
+  if (!currentValue) return false;
+  return splitRuleValues(rule.input_selection).includes(currentValue);
+}
+
+function getRuleInputValue(inputCode, selection) {
+  if (inputCode === "01.CERTIFICATION") return selection.certification === "atex" ? "ATEX" : "NON_ATEX";
+  if (inputCode === "01.APPLICATION") return selection.application === "food" ? "FOOD" : "NON_FOOD";
+  if (inputCode === "01.ORIENTATION") return selection.orientation === "vertical" ? "VERTICAL" : "HORIZONTAL";
+  if (inputCode === "PUMP_CODE") return selection.selectedPump?.pumpCode || "";
+  const match = findConfigVariableByCode(inputCode);
+  if (!match) return "";
+  const selectedOption = selection.configOptions?.[match.item.key];
+  const optionIndex = match.item.options.findIndex((option) => option === selectedOption);
+  return optionIndex >= 0 ? String(optionIndex + 1) : "";
+}
+
+function findConfigVariableByCode(code) {
+  for (let groupIndex = 0; groupIndex < CONFIG_OPTION_GROUPS.length; groupIndex += 1) {
+    const group = CONFIG_OPTION_GROUPS[groupIndex];
+    for (let itemIndex = 0; itemIndex < group.items.length; itemIndex += 1) {
+      if (getConfigVariableCode(groupIndex, itemIndex) === code) {
+        return { groupIndex, itemIndex, item: group.items[itemIndex] };
+      }
+    }
+  }
+  return null;
+}
+
+function getRuleOutputs(rule) {
+  return [1, 2, 3, 4]
+    .map((index) => ({
+      code: rule[`output_code_${index}`],
+      selection: rule[`output_selection_${index}`],
+    }))
+    .filter((output) => output.code && output.selection);
+}
+
+function splitRuleValues(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function intersectSets(left, right) {
+  return new Set([...left].filter((value) => right.has(value)));
 }
 
 function labelValue(value) {
@@ -1084,6 +1260,7 @@ function parseDatasetValue(value, column) {
   if (value === "") return null;
   if (column.type === "integer") return Number.parseInt(value, 10);
   if (column.type === "number") return Number(value);
+  if (column.type === "boolean") return ["true", "1", "yes", "active"].includes(String(value).trim().toLowerCase());
   return value;
 }
 
@@ -1158,6 +1335,10 @@ saveDatasetBtn.addEventListener("click", async () => {
 
   editedDatasetRows.clear();
   calculationDatasetCache = null;
+  if (activeDatasetKey === "configuration_rules") {
+    configurationRulesLoaded = false;
+    configurationRules = [];
+  }
   await loadDataset(activeDatasetKey);
   datasetStatus.classList.add("is-success");
   datasetStatus.textContent = "Saved.";
@@ -1242,6 +1423,11 @@ sidebarSteps.forEach((step) => {
     if (page === "config" && getActiveProject()) {
       saveActiveProject();
       renderConfigPage(getActiveProject());
+    }
+    if (page === "pump-config" && getActiveProject() && !validateModelSelection()) return;
+    if (page === "pump-config" && getActiveProject()) {
+      saveActiveProject();
+      renderPumpConfigurationPage(getActiveProject());
     }
     if (page === "media" || page === "selector") saveActiveProject();
     showPage(page);
@@ -1385,6 +1571,20 @@ goToConfigNextBtn.addEventListener("click", () => {
   currentConfigGroupIndex += 1;
   renderConfigPage(getActiveProject(), currentConfigGroupIndex);
 });
+
+goToPumpConfigurationBtn.addEventListener("click", () => {
+  saveActiveProject();
+  renderPumpConfigurationPage(getActiveProject());
+  showPage("pump-config");
+});
+
+backToConfigBtn.addEventListener("click", () => {
+  currentConfigGroupIndex = CONFIG_OPTION_GROUPS.length - 1;
+  renderConfigPage(getActiveProject(), currentConfigGroupIndex);
+  showPage("config");
+});
+
+savePumpConfigBtn.addEventListener("click", () => flashSaved(savePumpConfigBtn));
 
 function flashSaved(button) {
   saveActiveProject();

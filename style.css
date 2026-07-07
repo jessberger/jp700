@@ -1122,6 +1122,18 @@ h1 {
   color: rgba(255, 255, 255, 0.75);
 }
 
+.config-option-btn.is-unavailable {
+  cursor: default;
+  color: #8d9aa6;
+  border-color: rgba(172, 185, 196, 0.34);
+  background: rgba(238, 242, 246, 0.72);
+  box-shadow: none;
+}
+
+.config-option-btn.is-unavailable small {
+  color: #a8b2bb;
+}
+
 .configuration-next-panel {
   margin-top: 22px;
   padding-top: 16px;
@@ -1139,6 +1151,52 @@ h1 {
   letter-spacing: 0;
 }
 
+.pump-configuration-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0 22px;
+}
+
+.pump-configuration-group {
+  min-width: 0;
+  border-top: 1px solid rgba(216, 224, 231, 0.82);
+  padding-top: 10px;
+}
+
+.pump-configuration-group h3 {
+  margin: 0 0 8px;
+  color: var(--blue-dark);
+  font-size: 13px;
+}
+
+.pump-configuration-group dl {
+  display: grid;
+  grid-template-columns: minmax(116px, 0.42fr) minmax(0, 1fr);
+  gap: 0;
+  margin: 0;
+}
+
+.pump-configuration-group dt,
+.pump-configuration-group dd {
+  margin: 0;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(216, 224, 231, 0.58);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.pump-configuration-group dt {
+  color: var(--muted);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.pump-configuration-group dd {
+  color: var(--steel);
+  font-weight: 700;
+}
+
 @media (max-width: 980px) {
   .workspace-shell {
     grid-template-columns: 1fr;
@@ -1154,6 +1212,10 @@ h1 {
   }
 
   .media-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .pump-configuration-grid {
     grid-template-columns: 1fr;
   }
 }
