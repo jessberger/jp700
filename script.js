@@ -49,6 +49,7 @@ const saveModelBtn = document.querySelector("#saveModelBtn");
 const goToConfigBtn = document.querySelector("#goToConfigBtn");
 const backToModelBtn = document.querySelector("#backToModelBtn");
 const saveAndCloseBtn = document.querySelector("#saveAndCloseBtn");
+const goToConfigNextBtn = document.querySelector("#goToConfigNextBtn");
 const goToMotorSelectionBtn = document.querySelector("#goToMotorSelectionBtn");
 const projectContext = document.querySelector("#projectContext");
 const mediaProjectContext = document.querySelector("#mediaProjectContext");
@@ -64,10 +65,10 @@ const familyTableBody = document.querySelector("#familyTableBody");
 const modelSummary = document.querySelector("#modelSummary");
 const modelStatus = document.querySelector("#modelStatus");
 const modelTableBody = document.querySelector("#modelTableBody");
-const configSummary = document.querySelector("#configSummary");
+const configStepNumber = document.querySelector("#configStepNumber");
+const configStepTitle = document.querySelector("#configStepTitle");
 const configurationCode = document.querySelector("#configurationCode");
 const configurationOptions = document.querySelector("#configurationOptions");
-const configPumpDetails = document.querySelector("#configPumpDetails");
 const toggleGroups = document.querySelectorAll(".segmented-control");
 const mediaGroups = document.querySelectorAll(".option-stack");
 const flowInputs = {
@@ -95,6 +96,7 @@ let datasetOriginalRows = [];
 let editedDatasetRows = new Map();
 let calculationDatasetCache = null;
 let latestPumpRows = [];
+let currentConfigGroupIndex = 0;
 const DATASET_CONFIG = [
   { key: "pump_limits", label: "1.Pump_limits", table: "pump_limits", primaryKey: ["pump_code"], orderBy: ["sort_order", "pump_code"], columns: [
     { key: "pump_code", label: "Pump code", type: "text", locked: true },
@@ -142,36 +144,54 @@ const DATASET_CONFIG = [
 ];
 
 const CONFIG_OPTION_GROUPS = [
-  [
+  {
+    title: "Application Conditions",
+    items: [
     { key: "SUCTION_HEAD", options: ["Flooded", "Non-Flooded"] },
     { key: "OPERATION_TYPE", options: ["Continuous", "Intermittently"] },
   ],
-  [
+  },
+  {
+    title: "Materials",
+    items: [
     { key: "PUMP_CASING", options: ["Stainless Steel AISI 316Ti", "Stainless Steel AISI 316", "Stainless Steel AISI 431", "Cast iron GG25"] },
     { key: "LANTERN", options: ["Flexible Coupling (ATEX)", "Stainless Steel AISI 316Ti", "Stainless Steel AISI 304", "Aluminum", "Speed reducer 1:16"] },
     { key: "ROTOR", options: ["Stainless Steel AISI 316Ti", "Stainless Steel AISI 316Ti Hard chrome plated", "Stainless Steel AISI D6 Hardened", "Stainless Steel AISI 440B Hardened"] },
     { key: "ROTATING_PARTS", options: ["Stainless Steel AISI 316Ti", "Stainless Steel AISI 431", "Stainless Steel AISI 316", "Hardened"] },
     { key: "JOINTS", options: ["Torsionshaft", "Open pin joint (FDA)", "Sealed pin joint"] },
   ],
-  [
+  },
+  {
+    title: "Sealing and Elastomers",
+    items: [
     { key: "CASING_SEALING", options: ["NBR (FDA)", "NBR light (FDA)", "EPDM (FDA)", "EPDM light (FDA)", "PTFE", "FKM"] },
     { key: "STATOR", options: ["NBR (FDA)", "NBR light (FDA)", "EPDM (FDA)", "EPDM light (FDA)", "PTFE", "FKM"] },
     { key: "SHAFT_SEALING", options: ["Carbon/SiC/FKM", "SiC/SiC/FKM Chamfered", "SiC/SiC/FKM", "PS Lip Seal PTFE", "Carbon/SiC/FKM encapsulated", "SiC/SiC/NBR", "SiC/SiC/EPDM", "SiC/SiC/FEP", "ATEX Carbon/SiC/FKM"] },
     { key: "DIRECTION_OF_ROTATION", options: ["Clockwise", "Counterclockwise"] },
   ],
-  [
+  },
+  {
+    title: "Immersion Tube",
+    items: [
     { key: "IMMERSION_TUBE_LENGTH", options: ["700 mm", "800 mm", "900 mm", "1000 mm", "1100 mm", "1200 mm", "1300 mm", "1400 mm"] },
     { key: "IMMERSION_TUBE_DIA", options: ["54 mm", "89 mm", "105 mm", "130 mm"] },
   ],
-  [
+  },
+  {
+    title: "Connections",
+    items: [
     { key: "SUCTION_PORT", options: ["IG 1¼\"", "IG 1\"", "IG ¾''", "IG ½''", "AG 1½''", "DN 40 Tri-Clamp", "DN 40 - DIN 11851", "DN 15 - DIN 11851", "DN 50 - DIN 11851", "DN 65 - DIN 11851", "DN 80 - DIN 11851"] },
     { key: "DELIVERY_PORT", options: ["IG 1¼\"", "IG 1\"", "IG ¾''", "IG ½''", "AG 1½''", "DN 40 Tri-Clamp", "DN 40 - DIN 11851", "DN 15 - DIN 11851", "DN 50 - DIN 11851", "DN 65 - DIN 11851", "DN 80 - DIN 11851"] },
     { key: "HOSE_CONNECTION", options: ["Hose connection 1\" / 1¼\" / 1½\"", "Hose connection DN40 to 1\" / 1¼\" / 1½\"", "Hose connection Clamp DN40", "Hose connection DN50", "Hose connection DN65", "Hose connection DN80"] },
   ],
-  [
+  },
+  {
+    title: "Finish and Protection",
+    items: [
     { key: "VARNISH", options: ["RAL 5010", "RAL 1015 NSDF3+", "RAL 7024"] },
     { key: "PTC", options: ["3x155°C", "3x130°C"] },
   ],
+  },
 ];
 
 function setFormState(isLoading, message) {
@@ -787,35 +807,19 @@ function isRotationCompatible(rotationText, requiredRpm) {
   return Number.isFinite(value) && Math.round(rpm) === value;
 }
 
-function renderConfigPage(project) {
+function renderConfigPage(project, groupIndex = currentConfigGroupIndex) {
   const selection = { ...createBlankSelection(), ...(project.selection || {}) };
+  currentConfigGroupIndex = Math.max(0, Math.min(groupIndex, CONFIG_OPTION_GROUPS.length - 1));
+  const group = CONFIG_OPTION_GROUPS[currentConfigGroupIndex];
+  const stepNo = getConfigStepNumber(currentConfigGroupIndex);
   renderProjectContext(configProjectContext, project);
-  const extraRows = [];
-  if (selection.selectedFamily) extraRows.push(["06 Pump family", cleanPumpFamilyCode(selection.selectedFamily.pump_family)]);
-  if (selection.selectedModel) extraRows.push(["07 Pump Model", formatModelLabel(selection.selectedModel)]);
-  renderSelectionSummary(configSummary, selection, extraRows);
+  configStepNumber.textContent = stepNo;
+  configStepTitle.textContent = group.title;
   configurationCode.textContent = getConfigurationCode(selection);
-  renderConfigPumpDetails(selection);
-  configurationOptions.innerHTML = CONFIG_OPTION_GROUPS
-    .map((group, groupIndex) => renderConfigGroup(group, groupIndex, selection.configOptions || {}))
-    .join("");
-}
-
-function renderConfigPumpDetails(selection) {
-  if (!configPumpDetails) return;
-  const rows = [
-    ["Configuration code", getConfigurationCode(selection) || "-"],
-    ["Pump family", cleanPumpFamilyCode(selection.selectedFamily?.pump_family || "-")],
-    ["Pump selection", selection.selectedPump?.pumpCode || "-"],
-    ["Required RPM", selection.selectedPump ? formatRpm(selection.selectedPump.requiredRpm) : "-"],
-    ["Pump model", selection.selectedModel ? formatModelLabel(selection.selectedModel) : "-"],
-    ["Model rotation", selection.selectedModel?.rotation || "-"],
-    ["Pressure", `${selection.pressure || 6} bar`],
-  ];
-
-  configPumpDetails.innerHTML = rows
-    .map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`)
-    .join("");
+  configurationOptions.innerHTML = renderConfigGroup(group, currentConfigGroupIndex, selection.configOptions || {});
+  backToModelBtn.textContent = currentConfigGroupIndex === 0 ? "Back" : "Back";
+  goToConfigNextBtn.classList.toggle("is-hidden", currentConfigGroupIndex === CONFIG_OPTION_GROUPS.length - 1);
+  goToMotorSelectionBtn.closest(".configuration-next-panel")?.classList.toggle("is-hidden", currentConfigGroupIndex !== CONFIG_OPTION_GROUPS.length - 1);
 }
 
 function getConfigurationCode(selection) {
@@ -848,17 +852,21 @@ function formatModelLabel(model) {
   return name ? `${code} - ${name}` : code;
 }
 
+function getConfigStepNumber(groupIndex) {
+  return String(8 + groupIndex).padStart(2, "0");
+}
+
 function renderConfigGroup(group, groupIndex, selectedOptions) {
   return `
     <section class="config-option-group">
-      <div class="config-group-label">Group ${groupIndex + 1}</div>
-      ${group.map((item, itemIndex) => renderConfigVariable(item, groupIndex, itemIndex, selectedOptions)).join("")}
+      <div class="config-group-label">${escapeHtml(getConfigStepNumber(groupIndex))} / ${escapeHtml(group.title)}</div>
+      ${group.items.map((item, itemIndex) => renderConfigVariable(item, groupIndex, itemIndex, selectedOptions)).join("")}
     </section>
   `;
 }
 
 function renderConfigVariable(item, groupIndex, itemIndex, selectedOptions) {
-  const variableNo = `08.${groupIndex + 1}.${itemIndex + 1}`;
+  const variableNo = `${getConfigStepNumber(groupIndex)}.${itemIndex + 1}`;
   return `
     <div class="config-variable" data-variable="${escapeHtml(item.key)}">
       <div class="config-variable-title">
@@ -1352,17 +1360,30 @@ backToFamilyBtn.addEventListener("click", () => {
 goToConfigBtn.addEventListener("click", () => {
   if (!validateModelSelection()) return;
   saveActiveProject();
-  renderConfigPage(getActiveProject());
+  currentConfigGroupIndex = 0;
+  renderConfigPage(getActiveProject(), currentConfigGroupIndex);
   showPage("config");
 });
 
 backToModelBtn.addEventListener("click", () => {
+  if (currentConfigGroupIndex > 0) {
+    currentConfigGroupIndex -= 1;
+    renderConfigPage(getActiveProject(), currentConfigGroupIndex);
+    return;
+  }
   renderModelPage(getActiveProject());
   showPage("model");
 });
 
 saveAndCloseBtn.addEventListener("click", () => {
   flashSaved(saveAndCloseBtn);
+});
+
+goToConfigNextBtn.addEventListener("click", () => {
+  saveActiveProject();
+  if (currentConfigGroupIndex >= CONFIG_OPTION_GROUPS.length - 1) return;
+  currentConfigGroupIndex += 1;
+  renderConfigPage(getActiveProject(), currentConfigGroupIndex);
 });
 
 function flashSaved(button) {
