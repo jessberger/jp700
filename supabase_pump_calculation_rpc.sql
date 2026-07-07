@@ -19,7 +19,9 @@ returns table (
   maximum_rpm numeric,
   maximum_source text,
   maximum_percent integer,
-  matches_pressure_stage boolean
+  matches_pressure_stage boolean,
+  rpm_interval text,
+  is_in_rpm_range boolean
 )
 language plpgsql
 security definer
@@ -54,6 +56,9 @@ begin
     select
       pl.pump_code::text as calc_pump_code,
       coalesce(pl.sort_order, 999999) as calc_sort_order,
+      pl.rpm_interval::text as calc_rpm_interval,
+      nullif(split_part(pl.rpm_interval, '-', 1), '')::numeric as calc_rpm_min,
+      nullif(split_part(pl.rpm_interval, '-', 2), '')::numeric as calc_rpm_max,
       case
         when p_pressure_bar = 6 then pl.pump_code::text like '%.1'
         when p_pressure_bar = 12 then pl.pump_code::text like '%.2'
@@ -126,7 +131,12 @@ begin
     end as maximum_rpm,
     pb.calc_max_source as maximum_source,
     pb.calc_max_percent as maximum_percent,
-    pb.calc_matches_pressure_stage as matches_pressure_stage
+    pb.calc_matches_pressure_stage as matches_pressure_stage,
+    pb.calc_rpm_interval as rpm_interval,
+    case
+      when pb.calc_required_rpm is null or pb.calc_rpm_min is null or pb.calc_rpm_max is null then false
+      else pb.calc_required_rpm between pb.calc_rpm_min and pb.calc_rpm_max
+    end as is_in_rpm_range
   from percent_base pb
   order by pb.calc_sort_order, pb.calc_pump_code;
 end;

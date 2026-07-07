@@ -75,6 +75,7 @@ const DATASET_CONFIG = [
     { key: "max_rotation", label: "Max rotation", type: "number" },
     { key: "section_number", label: "Section number", type: "integer" },
     { key: "installation", label: "Installation", type: "text" },
+    { key: "rpm_interval", label: "RPM Interval", type: "text" },
   ]},
   { key: "jp_codes", label: "2.JP_Codes", table: "jp_codes", primaryKey: ["pump_family"], orderBy: ["pump_family"], columns: [
     { key: "pump_family", label: "Pump family", type: "text", locked: true },
@@ -384,9 +385,8 @@ async function renderPumpResults(selection) {
 
   try {
     const rows = await calculatePumpResultsFromSupabase(selection);
-    const visibleRows = rows.filter((row) => row.matchesPressureStage);
-    pumpResultsStatus.textContent = `${visibleRows.length} pump code(s) calculated.`;
-    pumpResultsTableBody.innerHTML = visibleRows.map(renderPumpResultRow).join("");
+    pumpResultsStatus.textContent = `${rows.length} pump code(s) calculated.`;
+    pumpResultsTableBody.innerHTML = rows.map((row) => renderPumpResultRow(row, selection)).join("");
   } catch (error) {
     pumpResultsStatus.textContent = error.message || "Pump calculation failed.";
   }
@@ -418,6 +418,8 @@ async function calculatePumpResultsFromSupabase(selection) {
     abrRpm: Number(row.rpm_abrasivity),
     visRpm: Number(row.rpm_viscosity),
     matchesPressureStage: Boolean(row.matches_pressure_stage ?? true),
+    isInRpmRange: Boolean(row.is_in_rpm_range ?? true),
+    rpmInterval: row.rpm_interval || "",
     maximumRpm: row.maximum_rpm == null ? null : {
       value: Number(row.maximum_rpm),
       source: row.maximum_source,
@@ -523,16 +525,31 @@ function getMaximumIncreasePercent(value) {
   return 5;
 }
 
-function renderPumpResultRow(row) {
+function renderPumpResultRow(row, selection) {
+  const reasons = getPumpRejectionReasons(row, selection);
   return `
-    <tr class="${row.isSelectable ? "" : "is-unavailable"}">
+    <tr class="${reasons.length ? "is-unavailable" : ""}">
       <td>${escapeHtml(row.pumpCode)}</td>
       <td>${formatRpm(row.requiredRpm)}</td>
       <td>${formatRpm(row.abrRpm)}</td>
       <td>${formatRpm(row.visRpm)}</td>
       <td>${formatMaximumRpm(row.maximumRpm)}</td>
+      <td>${formatRejectionReasons(reasons)}</td>
     </tr>
   `;
+}
+
+function getPumpRejectionReasons(row, selection) {
+  const reasons = [];
+  if (!row.matchesPressureStage) reasons.push(`(${selection.pressure} bar)`);
+  if (!row.isSelectable) reasons.push("(Not vertical)");
+  if (!row.isInRpmRange) reasons.push("(Out of RPM range)");
+  return reasons;
+}
+
+function formatRejectionReasons(reasons) {
+  if (!reasons.length) return "";
+  return `<ul class="pump-reason-list">${reasons.map((reason) => `<li>${escapeHtml(reason)}</li>`).join("")}</ul>`;
 }
 
 function formatRpm(value) {

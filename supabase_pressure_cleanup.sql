@@ -1,7 +1,11 @@
 ﻿-- Run this in Supabase SQL Editor.
--- Normalizes stage pump codes and keeps only valid pressure/efficiency combinations.
+-- Normalizes stage pump codes, keeps valid pressure/efficiency combinations, and fills RPM intervals.
 
 begin;
+
+-- Add RPM interval to pump limits for calculation and dataset editing.
+alter table public.pump_limits
+  add column if not exists rpm_interval text;
 
 -- Temporarily drop foreign keys so pump codes can be renamed consistently.
 alter table public.efficiency
@@ -32,6 +36,12 @@ set pump_code = case
 end
 where pump_code in ('7032', '7052', '7082', '7112', '50L', '350L');
 
+-- Fix single-stage values.
+update public.pump_limits
+set stage = 1,
+    section_number = 15
+where pump_code in ('7032.1', '7052.1', '7082.1', '7112.1');
+
 -- Keep only selectable pressure levels globally.
 delete from public.efficiency
 where pressure_bar not in (6, 12, 24);
@@ -42,10 +52,40 @@ where (pump_code like '%.1' and pressure_bar <> 6)
    or (pump_code like '%.2' and pressure_bar <> 12)
    or (pump_code like '%.4' and pressure_bar <> 24);
 
--- These single-stage pumps use the first available abrasion/viscosity section.
-update public.pump_limits
-set section_number = 15
-where pump_code in ('7032.1', '7052.1', '7082.1', '7112.1');
+-- Fill RPM intervals.
+with rpm_ranges(pump_code, rpm_interval) as (
+  values
+    ('12.1', '700-900'),
+    ('12.2', '700-900'),
+    ('25.1', '700-900'),
+    ('25.2', '700-900'),
+    ('50.1', '700-900'),
+    ('50.2', '700-900'),
+    ('50L.1', '700-900'),
+    ('80.1', '100-500'),
+    ('80.2', '100-500'),
+    ('200.1', '100-500'),
+    ('200.2', '100-500'),
+    ('300.1', '100-500'),
+    ('300.2', '100-500'),
+    ('350.1', '100-500'),
+    ('350.2', '100-500'),
+    ('350L.1', '100-500'),
+    ('7032.1', '75-400'),
+    ('7052.1', '75-400'),
+    ('7082.1', '75-400'),
+    ('7112.1', '75-400'),
+    ('7115.1', '75-400'),
+    ('7115.2', '75-400'),
+    ('7115.4', '75-400'),
+    ('7120.1', '75-400'),
+    ('7120.2', '75-400'),
+    ('7120.4', '75-400')
+)
+update public.pump_limits pl
+set rpm_interval = rpm_ranges.rpm_interval
+from rpm_ranges
+where pl.pump_code = rpm_ranges.pump_code;
 
 -- Recreate relations after all affected tables use the new codes.
 alter table public.efficiency
@@ -65,32 +105,11 @@ alter table public.rpm_formula
 -- Keep the custom display order after code rename.
 with desired_order(pump_code, sort_order) as (
   values
-    ('12.1', 1),
-    ('12.2', 2),
-    ('25.1', 3),
-    ('25.2', 4),
-    ('50.1', 5),
-    ('50.2', 6),
-    ('50L.1', 7),
-    ('80.1', 8),
-    ('80.2', 9),
-    ('200.1', 10),
-    ('200.2', 11),
-    ('300.1', 12),
-    ('300.2', 13),
-    ('350.1', 14),
-    ('350.2', 15),
-    ('350L.1', 16),
-    ('7032.1', 17),
-    ('7052.1', 18),
-    ('7082.1', 19),
-    ('7112.1', 20),
-    ('7115.1', 21),
-    ('7115.2', 22),
-    ('7115.4', 23),
-    ('7120.1', 24),
-    ('7120.2', 25),
-    ('7120.4', 26)
+    ('12.1', 1), ('12.2', 2), ('25.1', 3), ('25.2', 4), ('50.1', 5), ('50.2', 6),
+    ('50L.1', 7), ('80.1', 8), ('80.2', 9), ('200.1', 10), ('200.2', 11),
+    ('300.1', 12), ('300.2', 13), ('350.1', 14), ('350.2', 15), ('350L.1', 16),
+    ('7032.1', 17), ('7052.1', 18), ('7082.1', 19), ('7112.1', 20),
+    ('7115.1', 21), ('7115.2', 22), ('7115.4', 23), ('7120.1', 24), ('7120.2', 25), ('7120.4', 26)
 )
 update public.pump_limits pl
 set sort_order = desired_order.sort_order
@@ -130,7 +149,9 @@ notify pgrst, 'reload schema';
 -- Diagnostic: this should return no rows. If it returns rows, those pumps still miss calculation data.
 select
   pl.pump_code,
+  pl.stage,
   pl.section_number,
+  pl.rpm_interval,
   case when rf.pump_code is null then 'missing rpm_formula' else 'ok' end as rpm_formula_status,
   case when ef.pump_code is null then 'missing 6 bar efficiency' else 'ok' end as efficiency_status,
   case when av.section is null then 'missing abb_vis section' else 'ok' end as abb_vis_status
@@ -139,4 +160,4 @@ left join public.rpm_formula rf on rf.pump_code = pl.pump_code
 left join public.efficiency ef on ef.pump_code = pl.pump_code and ef.pressure_bar = 6
 left join public.abb_vis av on av.section = pl.section_number
 where pl.pump_code in ('50L.1', '350L.1', '7032.1', '7052.1', '7082.1', '7112.1')
-  and (rf.pump_code is null or ef.pump_code is null or av.section is null);
+  and (rf.pump_code is null or ef.pump_code is null or av.section is null or pl.rpm_interval is null);
