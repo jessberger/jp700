@@ -14,6 +14,7 @@ const datasetTableHead = document.querySelector("#datasetTableHead");
 const datasetTableBody = document.querySelector("#datasetTableBody");
 const datasetStatus = document.querySelector("#datasetStatus");
 const saveDatasetBtn = document.querySelector("#saveDatasetBtn");
+const addDatasetRowBtn = document.querySelector("#addDatasetRowBtn");
 
 const authForm = document.querySelector("#authForm");
 const usernameInput = document.querySelector("#usernameInput");
@@ -150,20 +151,12 @@ const DATASET_CONFIG = [
     { key: "rotor_diameter", label: "Rotor diameter", type: "number" },
     { key: "stator_pitch", label: "Stator pitch", type: "number" },
   ]},
-  { key: "configuration_rules", label: "7.Configuration_Rules", table: "configuration_rules", primaryKey: ["rule_id"], orderBy: ["rule_order", "rule_id"], columns: [
-    { key: "rule_id", label: "Rule ID", type: "integer", locked: true },
-    { key: "rule_order", label: "Order", type: "integer" },
-    { key: "is_active", label: "Active", type: "boolean" },
-    { key: "input_code", label: "Input code", type: "text" },
+  { key: "configuration_rules", label: "7.Configuration_Rules", table: "configuration_rules", primaryKey: ["rule_id"], orderBy: ["rule_id"], allowInsertDelete: true, columns: [
+    { key: "rule_id", label: "ID", type: "integer", locked: true },
+    { key: "input_code", label: "Input", type: "text" },
     { key: "input_selection", label: "Input selection", type: "text" },
-    { key: "output_code_1", label: "Output code 1", type: "text" },
-    { key: "output_selection_1", label: "Output selection 1", type: "text" },
-    { key: "output_code_2", label: "Output code 2", type: "text" },
-    { key: "output_selection_2", label: "Output selection 2", type: "text" },
-    { key: "output_code_3", label: "Output code 3", type: "text" },
-    { key: "output_selection_3", label: "Output selection 3", type: "text" },
-    { key: "output_code_4", label: "Output code 4", type: "text" },
-    { key: "output_selection_4", label: "Output selection 4", type: "text" },
+    { key: "output_code", label: "Output", type: "text" },
+    { key: "output_selection", label: "Output selection", type: "text" },
   ]},
 ];
 
@@ -990,7 +983,7 @@ async function loadConfigurationRules() {
   if (configurationRulesLoaded) return configurationRules;
   try {
     const rows = await loadTableRows("configuration_rules");
-    configurationRules = rows.filter((row) => row.is_active !== false && row.is_active !== "false");
+    configurationRules = rows;
   } catch (error) {
     configurationRules = [];
   }
@@ -1002,12 +995,9 @@ function getAllowedOptionNumbers(outputCode, selection) {
   let allowed = null;
   configurationRules.forEach((rule) => {
     if (!ruleMatchesInput(rule, selection)) return;
-    getRuleOutputs(rule)
-      .filter((output) => output.code === outputCode)
-      .forEach((output) => {
-        const outputSet = new Set(splitRuleValues(output.selection));
-        allowed = allowed ? intersectSets(allowed, outputSet) : outputSet;
-      });
+    if (rule.output_code !== outputCode || !rule.output_selection) return;
+    const outputSet = new Set(splitRuleValues(rule.output_selection));
+    allowed = allowed ? intersectSets(allowed, outputSet) : outputSet;
   });
   return allowed;
 }
@@ -1040,15 +1030,6 @@ function findConfigVariableByCode(code) {
     }
   }
   return null;
-}
-
-function getRuleOutputs(rule) {
-  return [1, 2, 3, 4]
-    .map((index) => ({
-      code: rule[`output_code_${index}`],
-      selection: rule[`output_selection_${index}`],
-    }))
-    .filter((output) => output.code && output.selection);
 }
 
 function splitRuleValues(value) {
@@ -1210,7 +1191,8 @@ function renderDatasetTabs() {
 
 function renderDatasetTable(config) {
   const editable = canEditDatasets();
-  datasetTableHead.innerHTML = `<tr>${config.columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join("")}</tr>`;
+  const canChangeRows = editable && config.allowInsertDelete;
+  datasetTableHead.innerHTML = `<tr>${config.columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join("")}${canChangeRows ? "<th></th>" : ""}</tr>`;
   datasetTableBody.innerHTML = datasetRows.map((row, rowIndex) => `
     <tr>
       ${config.columns.map((column) => {
@@ -1218,9 +1200,11 @@ function renderDatasetTable(config) {
         const value = row[column.key] ?? "";
         return `<td><input ${disabled ? "disabled" : ""} data-row="${rowIndex}" data-column="${column.key}" value="${escapeHtml(value)}" /></td>`;
       }).join("")}
+      ${canChangeRows ? `<td><button class="dataset-delete-row" type="button" data-row="${rowIndex}">Delete</button></td>` : ""}
     </tr>
   `).join("");
 
+  addDatasetRowBtn.classList.toggle("is-hidden", !canChangeRows);
   datasetStatus.textContent = editable
     ? `${datasetRows.length} rows loaded. Edit cells and save changes.`
     : `${datasetRows.length} rows loaded. Read-only access.`;
@@ -1231,6 +1215,7 @@ async function loadDataset(key) {
     datasetStatus.textContent = "You do not have access to datasets.";
     datasetTableHead.innerHTML = "";
     datasetTableBody.innerHTML = "";
+    addDatasetRowBtn.classList.add("is-hidden");
     return;
   }
 
@@ -1276,6 +1261,21 @@ datasetTabs.addEventListener("click", (event) => {
   loadDataset(button.dataset.dataset);
 });
 
+addDatasetRowBtn.addEventListener("click", () => {
+  const config = getDatasetConfig();
+  if (!canEditDatasets() || !config.allowInsertDelete) return;
+
+  const row = { __isNew: true };
+  config.columns.forEach((column) => {
+    row[column.key] = "";
+  });
+  datasetRows.unshift(row);
+  datasetOriginalRows.unshift({});
+  editedDatasetRows.set(0, true);
+  renderDatasetTable(config);
+  datasetStatus.textContent = "New row added. Fill it and save changes.";
+});
+
 datasetTableBody.addEventListener("input", (event) => {
   const input = event.target.closest("input[data-row][data-column]");
   if (!input || !canEditDatasets()) return;
@@ -1290,6 +1290,47 @@ datasetTableBody.addEventListener("input", (event) => {
   editedDatasetRows.set(rowIndex, true);
   input.classList.add("is-edited");
   datasetStatus.textContent = `${editedDatasetRows.size} row(s) changed.`;
+});
+
+datasetTableBody.addEventListener("click", async (event) => {
+  const button = event.target.closest(".dataset-delete-row");
+  if (!button || !canEditDatasets()) return;
+
+  const config = getDatasetConfig();
+  if (!config.allowInsertDelete) return;
+
+  const rowIndex = Number(button.dataset.row);
+  const row = datasetRows[rowIndex];
+  if (!row) return;
+
+  if (row.__isNew) {
+    datasetRows.splice(rowIndex, 1);
+    datasetOriginalRows.splice(rowIndex, 1);
+    editedDatasetRows.clear();
+    renderDatasetTable(config);
+    datasetStatus.textContent = "New row removed.";
+    return;
+  }
+
+  const confirmed = window.confirm("Delete this rule?");
+  if (!confirmed) return;
+
+  const response = await authenticatedFetch(`${SUPABASE_URL}/rest/v1/${config.table}?${datasetRowFilter(config, row)}`, {
+    method: "DELETE",
+    headers: { ...apiHeaders(), Prefer: "return=minimal" },
+  });
+
+  if (!response.ok) {
+    datasetStatus.classList.add("is-error");
+    datasetStatus.textContent = "Delete failed. Please check permissions.";
+    return;
+  }
+
+  configurationRulesLoaded = false;
+  configurationRules = [];
+  await loadDataset(activeDatasetKey);
+  datasetStatus.classList.add("is-success");
+  datasetStatus.textContent = "Rule deleted.";
 });
 
 saveDatasetBtn.addEventListener("click", async () => {
@@ -1311,6 +1352,11 @@ saveDatasetBtn.addEventListener("click", async () => {
     const payload = {};
 
     config.columns.forEach((column) => {
+      if (row.__isNew && column.locked) return;
+      if (row.__isNew && row[column.key] !== "") {
+        payload[column.key] = parseDatasetValue(row[column.key], column);
+        return;
+      }
       if (!column.locked && row[column.key] !== originalRow[column.key]) {
         payload[column.key] = row[column.key];
       }
@@ -1318,8 +1364,8 @@ saveDatasetBtn.addEventListener("click", async () => {
 
     if (Object.keys(payload).length === 0) continue;
 
-    const response = await authenticatedFetch(`${SUPABASE_URL}/rest/v1/${config.table}?${datasetRowFilter(config, row)}`, {
-      method: "PATCH",
+    const response = await authenticatedFetch(row.__isNew ? `${SUPABASE_URL}/rest/v1/${config.table}` : `${SUPABASE_URL}/rest/v1/${config.table}?${datasetRowFilter(config, row)}`, {
+      method: row.__isNew ? "POST" : "PATCH",
       headers: { ...apiHeaders(), Prefer: "return=minimal" },
       body: JSON.stringify(payload),
     });
