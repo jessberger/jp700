@@ -1122,6 +1122,23 @@ h1 {
   color: rgba(255, 255, 255, 0.75);
 }
 
+.configuration-next-panel {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(216, 224, 231, 0.88);
+}
+
+.compact-summary {
+  margin: 8px 0 14px;
+}
+
+.motor-selection-action {
+  width: 100%;
+  justify-content: center;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
 @media (max-width: 980px) {
   .workspace-shell {
     grid-template-columns: 1fr;

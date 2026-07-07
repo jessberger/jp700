@@ -49,6 +49,7 @@ const saveModelBtn = document.querySelector("#saveModelBtn");
 const goToConfigBtn = document.querySelector("#goToConfigBtn");
 const backToModelBtn = document.querySelector("#backToModelBtn");
 const saveAndCloseBtn = document.querySelector("#saveAndCloseBtn");
+const goToMotorSelectionBtn = document.querySelector("#goToMotorSelectionBtn");
 const projectContext = document.querySelector("#projectContext");
 const mediaProjectContext = document.querySelector("#mediaProjectContext");
 const pumpProjectContext = document.querySelector("#pumpProjectContext");
@@ -66,6 +67,7 @@ const modelTableBody = document.querySelector("#modelTableBody");
 const configSummary = document.querySelector("#configSummary");
 const configurationCode = document.querySelector("#configurationCode");
 const configurationOptions = document.querySelector("#configurationOptions");
+const configPumpDetails = document.querySelector("#configPumpDetails");
 const toggleGroups = document.querySelectorAll(".segmented-control");
 const mediaGroups = document.querySelectorAll(".option-stack");
 const flowInputs = {
@@ -109,6 +111,8 @@ const DATASET_CONFIG = [
   ]},
   { key: "sr_codes", label: "3.SR_Codes", table: "sr_codes", primaryKey: ["pump_model"], orderBy: ["pump_model"], columns: [
     { key: "pump_model", label: "Pump model", type: "text", locked: true },
+    { key: "model_code", label: "Model code", type: "text" },
+    { key: "model_name", label: "Model name", type: "text" },
     { key: "phase", label: "Phase", type: "text" },
     { key: "rotation", label: "Rotation", type: "text" },
   ]},
@@ -699,7 +703,7 @@ function renderFamilyRow(row, selection) {
   const isSelected = selection.selectedFamily?.pump_family === row.pump_family;
   return `
     <tr class="${isAvailable ? "is-selectable" : "is-unavailable"} ${isSelected ? "is-selected" : ""}" data-family="${escapeHtml(row.pump_family)}">
-      <td>${escapeHtml(row.pump_family)}</td>
+      <td>${escapeHtml(cleanPumpFamilyCode(row.pump_family))}</td>
       <td>${escapeHtml(row.type)}</td>
       <td>${escapeHtml(row.installation)}</td>
     </tr>
@@ -734,8 +738,8 @@ async function renderModelPage(project) {
   const selection = { ...createBlankSelection(), ...(project.selection || {}) };
   renderProjectContext(modelProjectContext, project);
   const extraRows = [];
-  if (selection.selectedFamily) extraRows.push(["06 Pump family", selection.selectedFamily.pump_family]);
-  if (selection.selectedModel) extraRows.push(["07 Pump Model", selection.selectedModel.pump_model]);
+  if (selection.selectedFamily) extraRows.push(["06 Pump family", cleanPumpFamilyCode(selection.selectedFamily.pump_family)]);
+  if (selection.selectedModel) extraRows.push(["07 Pump Model", formatModelLabel(selection.selectedModel)]);
   renderSelectionSummary(modelSummary, selection, extraRows);
   modelTableBody.innerHTML = "";
   modelStatus.textContent = "Loading pump models...";
@@ -753,10 +757,13 @@ function renderModelRow(row, selection) {
   const isAvailable = isRotationCompatible(row.rotation, selection.selectedPump?.requiredRpm);
   const isSelected = selection.selectedModel?.pump_model === row.pump_model;
   return `
-    <tr class="${isAvailable ? "is-selectable" : "is-unavailable"} ${isSelected ? "is-selected" : ""}" data-model="${escapeHtml(row.pump_model)}">
-      <td>${escapeHtml(row.pump_model)}</td>
-      <td>${escapeHtml(row.phase)}</td>
-      <td>${escapeHtml(row.rotation)}</td>
+    <tr class="${isAvailable ? "is-selectable" : "is-unavailable"} ${isSelected ? "is-selected" : ""}"
+      data-model="${escapeHtml(row.pump_model)}"
+      data-model-code="${escapeHtml(row.model_code || getModelCode(row))}"
+      data-model-name="${escapeHtml(row.model_name || getModelName(row))}">
+      <td>${escapeHtml(formatModelLabel(row))}</td>
+      <td>${escapeHtml(row.phase || "")}</td>
+      <td>${escapeHtml(row.rotation || "")}</td>
     </tr>
   `;
 }
@@ -784,20 +791,61 @@ function renderConfigPage(project) {
   const selection = { ...createBlankSelection(), ...(project.selection || {}) };
   renderProjectContext(configProjectContext, project);
   const extraRows = [];
-  if (selection.selectedFamily) extraRows.push(["06 Pump family", selection.selectedFamily.pump_family]);
-  if (selection.selectedModel) extraRows.push(["07 Pump Model", selection.selectedModel.pump_model]);
+  if (selection.selectedFamily) extraRows.push(["06 Pump family", cleanPumpFamilyCode(selection.selectedFamily.pump_family)]);
+  if (selection.selectedModel) extraRows.push(["07 Pump Model", formatModelLabel(selection.selectedModel)]);
   renderSelectionSummary(configSummary, selection, extraRows);
   configurationCode.textContent = getConfigurationCode(selection);
+  renderConfigPumpDetails(selection);
   configurationOptions.innerHTML = CONFIG_OPTION_GROUPS
     .map((group, groupIndex) => renderConfigGroup(group, groupIndex, selection.configOptions || {}))
     .join("");
 }
 
+function renderConfigPumpDetails(selection) {
+  if (!configPumpDetails) return;
+  const rows = [
+    ["Configuration code", getConfigurationCode(selection) || "-"],
+    ["Pump family", cleanPumpFamilyCode(selection.selectedFamily?.pump_family || "-")],
+    ["Pump selection", selection.selectedPump?.pumpCode || "-"],
+    ["Required RPM", selection.selectedPump ? formatRpm(selection.selectedPump.requiredRpm) : "-"],
+    ["Pump model", selection.selectedModel ? formatModelLabel(selection.selectedModel) : "-"],
+    ["Model rotation", selection.selectedModel?.rotation || "-"],
+    ["Pressure", `${selection.pressure || 6} bar`],
+  ];
+
+  configPumpDetails.innerHTML = rows
+    .map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`)
+    .join("");
+}
+
 function getConfigurationCode(selection) {
-  const family = selection.selectedFamily?.pump_family || "";
+  const family = cleanPumpFamilyCode(selection.selectedFamily?.pump_family || "");
   const pump = selection.selectedPump?.pumpCode || "";
-  const model = selection.selectedModel?.pump_model || "";
+  const model = getModelCode(selection.selectedModel);
   return `${family}.${pump} ${model}`.trim();
+}
+
+function cleanPumpFamilyCode(value) {
+  return String(value || "").replace(/\.+$/g, "");
+}
+
+function getModelCode(model) {
+  if (!model) return "";
+  if (model.model_code) return model.model_code;
+  return String(model.pump_model || "").split(" - ")[0].trim();
+}
+
+function getModelName(model) {
+  if (!model) return "";
+  if (model.model_name) return model.model_name;
+  const parts = String(model.pump_model || "").split(" - ");
+  return parts.length > 1 ? parts.slice(1).join(" - ").trim() : "";
+}
+
+function formatModelLabel(model) {
+  const code = getModelCode(model);
+  const name = getModelName(model);
+  return name ? `${code} - ${name}` : code;
 }
 
 function renderConfigGroup(group, groupIndex, selectedOptions) {
@@ -1314,9 +1362,7 @@ backToModelBtn.addEventListener("click", () => {
 });
 
 saveAndCloseBtn.addEventListener("click", () => {
-  saveActiveProject();
-  renderProjects();
-  showPage("projects");
+  flashSaved(saveAndCloseBtn);
 });
 
 function flashSaved(button) {
@@ -1382,6 +1428,8 @@ modelTableBody.addEventListener("click", (event) => {
     ...(project.selection || {}),
     selectedModel: {
       pump_model: rowElement.dataset.model,
+      model_code: rowElement.dataset.modelCode || "",
+      model_name: rowElement.dataset.modelName || "",
       phase: rowElement.children[1]?.textContent || "",
       rotation: rowElement.children[2]?.textContent || "",
     },
@@ -1407,6 +1455,13 @@ configurationOptions.addEventListener("click", (event) => {
   saveProjects();
   renderConfigPage(project);
 });
+
+if (goToMotorSelectionBtn) {
+  goToMotorSelectionBtn.addEventListener("click", () => {
+    saveActiveProject();
+    window.alert("Motor selection will be added next.");
+  });
+}
 
 toggleGroups.forEach((group) => {
   group.addEventListener("click", (event) => {

@@ -413,11 +413,16 @@
               <dl class="selection-summary" id="configSummary"></dl>
               <div class="configuration-code" id="configurationCode"></div>
               <div class="configuration-options" id="configurationOptions"></div>
+              <section class="configuration-next-panel" aria-label="Next pump package step">
+                <div class="config-group-label">Next</div>
+                <dl class="selection-summary compact-summary" id="configPumpDetails"></dl>
+                <button class="primary-action compact-action motor-selection-action" type="button" id="goToMotorSelectionBtn">Go to motor selection</button>
+              </section>
             </article>
 
             <div class="page-actions final-actions">
               <button class="ghost-action page-action-left" type="button" id="backToModelBtn">Back</button>
-              <button class="primary-action compact-action page-action-right" type="button" id="saveAndCloseBtn">Save and close</button>
+              <button class="primary-action compact-action page-action-center" type="button" id="saveAndCloseBtn">Save</button>
             </div>
           </section>
         </section>
@@ -484,7 +489,7 @@
       </form>
     </div>
 
-    <script src="script.js?v=20260707-config-options"></script>
+    <script src="script.js?v=20260707-motor-step"></script>
   </body>
 </html>
 
