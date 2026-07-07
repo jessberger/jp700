@@ -537,8 +537,10 @@ function renderPumpResultRow(row) {
 
 function formatRpm(value) {
   if (!Number.isFinite(value)) return "Missing data";
-  if (Math.abs(value) < 1) return "<1";
-  return String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return Number(value).toLocaleString("de-DE", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
 }
 
 function formatMaximumRpm(result) {
