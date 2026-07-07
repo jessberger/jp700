@@ -306,12 +306,12 @@ h1 {
 .selector-workspace {
   width: min(1180px, calc(100% - 40px));
   margin: 0 auto;
-  padding: clamp(34px, 5vw, 62px) 0 72px;
+  padding: clamp(26px, 4vw, 44px) 0 56px;
 }
 
 .selection-card {
-  margin: 0 auto 24px;
-  padding: clamp(22px, 3vw, 34px);
+  margin: 0 auto 18px;
+  padding: clamp(18px, 2.4vw, 26px);
   box-shadow: var(--soft-shadow);
 }
 
@@ -323,8 +323,8 @@ h1 {
 .card-heading {
   display: flex;
   align-items: baseline;
-  gap: 12px;
-  margin-bottom: 22px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .card-heading span {
@@ -336,14 +336,14 @@ h1 {
 .card-heading h2 {
   margin-bottom: 0;
   color: var(--steel);
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1.1;
 }
 
 .toggle-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 14px;
 }
 
 .toggle-group {
@@ -364,7 +364,7 @@ h1 {
 .segmented-control {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  min-height: 54px;
+  min-height: 46px;
   padding: 4px;
   border: 1px solid rgba(0, 92, 168, 0.16);
   border-radius: 8px;
@@ -373,7 +373,8 @@ h1 {
 
 .pressure-choice {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  max-width: 540px;
+  width: min(540px, 100%);
+  margin: 0 auto;
 }
 
 .toggle-option {
@@ -381,6 +382,7 @@ h1 {
   border-radius: 6px;
   color: var(--muted);
   background: transparent;
+  font-size: 13px;
   font-weight: 800;
   transition:
     background 160ms ease,
@@ -397,7 +399,7 @@ h1 {
 .flow-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 14px;
 }
 
 .flow-field input.is-calculated {
@@ -881,11 +883,11 @@ h1 {
 
 .media-option {
   width: 100%;
-  min-height: 92px;
+  min-height: 78px;
   display: grid;
   align-content: center;
-  gap: 7px;
-  padding: 16px;
+  gap: 6px;
+  padding: 13px 14px;
   border: 1px solid rgba(0, 92, 168, 0.14);
   border-radius: 8px;
   color: var(--steel);
@@ -898,13 +900,13 @@ h1 {
 }
 
 .media-option strong {
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.25;
 }
 
 .media-option span {
   color: var(--muted);
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.4;
 }
 
@@ -1038,8 +1040,8 @@ h1 {
 
 .page-actions .primary-action,
 .page-actions .ghost-action {
-  min-width: 132px;
-  min-height: 46px;
+  min-width: 118px;
+  min-height: 40px;
 }
 
 .final-actions {
