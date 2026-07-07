@@ -1102,7 +1102,13 @@ h1 {
 }
 
 .final-actions {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.page-actions .page-action-center.primary-action {
+  color: var(--blue-dark);
+  background: linear-gradient(135deg, #d9ecfb, #c5e3f8);
+  box-shadow: 0 10px 20px rgba(0, 92, 168, 0.12);
 }
 
 .media-option.is-active {
