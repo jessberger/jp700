@@ -4,6 +4,8 @@ const projectsPage = document.querySelector("#projectsPage");
 const selectorPage = document.querySelector("#selectorPage");
 const mediaPage = document.querySelector("#mediaPage");
 const pumpPage = document.querySelector("#pumpPage");
+const familyPage = document.querySelector("#familyPage");
+const modelPage = document.querySelector("#modelPage");
 const datasetsPage = document.querySelector("#datasetsPage");
 const datasetTabs = document.querySelector("#datasetTabs");
 const datasetTableHead = document.querySelector("#datasetTableHead");
@@ -36,12 +38,26 @@ const backToTypeBtn = document.querySelector("#backToTypeBtn");
 const goToPumpBtn = document.querySelector("#goToPumpBtn");
 const saveMediaBtn = document.querySelector("#saveMediaBtn");
 const backToMediaBtn = document.querySelector("#backToMediaBtn");
+const savePumpBtn = document.querySelector("#savePumpBtn");
+const goToFamilyBtn = document.querySelector("#goToFamilyBtn");
+const backToPumpBtn = document.querySelector("#backToPumpBtn");
+const saveFamilyBtn = document.querySelector("#saveFamilyBtn");
+const goToModelBtn = document.querySelector("#goToModelBtn");
+const backToFamilyBtn = document.querySelector("#backToFamilyBtn");
 const saveAndCloseBtn = document.querySelector("#saveAndCloseBtn");
 const projectContext = document.querySelector("#projectContext");
 const mediaProjectContext = document.querySelector("#mediaProjectContext");
 const pumpProjectContext = document.querySelector("#pumpProjectContext");
+const familyProjectContext = document.querySelector("#familyProjectContext");
+const modelProjectContext = document.querySelector("#modelProjectContext");
 const pumpResultsStatus = document.querySelector("#pumpResultsStatus");
 const pumpResultsTableBody = document.querySelector("#pumpResultsTableBody");
+const familySummary = document.querySelector("#familySummary");
+const familyStatus = document.querySelector("#familyStatus");
+const familyTableBody = document.querySelector("#familyTableBody");
+const modelSummary = document.querySelector("#modelSummary");
+const modelStatus = document.querySelector("#modelStatus");
+const modelTableBody = document.querySelector("#modelTableBody");
 const toggleGroups = document.querySelectorAll(".segmented-control");
 const mediaGroups = document.querySelectorAll(".option-stack");
 const flowInputs = {
@@ -68,6 +84,7 @@ let datasetRows = [];
 let datasetOriginalRows = [];
 let editedDatasetRows = new Map();
 let calculationDatasetCache = null;
+let latestPumpRows = [];
 const DATASET_CONFIG = [
   { key: "pump_limits", label: "1.Pump_limits", table: "pump_limits", primaryKey: ["pump_code"], orderBy: ["sort_order", "pump_code"], columns: [
     { key: "pump_code", label: "Pump code", type: "text", locked: true },
@@ -127,6 +144,8 @@ function showPage(page) {
   selectorPage.classList.toggle("is-hidden", page !== "selector");
   mediaPage.classList.toggle("is-hidden", page !== "media");
   pumpPage.classList.toggle("is-hidden", page !== "pump");
+  familyPage.classList.toggle("is-hidden", page !== "family");
+  modelPage.classList.toggle("is-hidden", page !== "model");
   datasetsPage.classList.toggle("is-hidden", page !== "datasets");
   workspaceShell.dataset.page = page;
   workspaceShell.classList.toggle("can-view-datasets", canViewDatasets());
@@ -187,6 +206,9 @@ function createBlankSelection() {
     pressure: 6,
     abrasivity: "",
     viscosity: "",
+    selectedPump: null,
+    selectedFamily: null,
+    selectedModel: null,
   };
 }
 
@@ -243,6 +265,8 @@ function openProject(projectId, targetPage = "selector") {
   localStorage.setItem(ACTIVE_PROJECT_KEY, projectId);
   hydrateProject(project);
   if (targetPage === "pump") renderPumpPage(project);
+  if (targetPage === "family") renderFamilyPage(project);
+  if (targetPage === "model") renderModelPage(project);
   showPage(targetPage);
 }
 
@@ -291,6 +315,8 @@ function hydrateProject(project) {
   renderProjectContext(projectContext, project);
   renderProjectContext(mediaProjectContext, project);
   renderProjectContext(pumpProjectContext, project);
+  renderProjectContext(familyProjectContext, project);
+  renderProjectContext(modelProjectContext, project);
   setToggleValue("application", selection.application);
   setToggleValue("certification", selection.certification);
   setToggleValue("orientation", selection.orientation);
@@ -341,7 +367,7 @@ function saveActiveProject() {
   const project = getActiveProject();
   if (!project) return;
 
-  project.selection = collectSelection();
+  project.selection = { ...createBlankSelection(), ...(project.selection || {}), ...collectSelection() };
   project.status = "In progress";
   project.updatedAt = new Date().toISOString();
   saveProjects();
@@ -349,6 +375,8 @@ function saveActiveProject() {
   renderProjectContext(projectContext, project);
   renderProjectContext(mediaProjectContext, project);
   renderProjectContext(pumpProjectContext, project);
+  renderProjectContext(familyProjectContext, project);
+  renderProjectContext(modelProjectContext, project);
   updateSidebar(getVisiblePage());
 }
 
@@ -363,6 +391,8 @@ function getVisiblePage() {
   if (!selectorPage.classList.contains("is-hidden")) return "selector";
   if (!mediaPage.classList.contains("is-hidden")) return "media";
   if (!pumpPage.classList.contains("is-hidden")) return "pump";
+  if (!familyPage.classList.contains("is-hidden")) return "family";
+  if (!modelPage.classList.contains("is-hidden")) return "model";
   return "login";
 }
 
@@ -385,6 +415,7 @@ async function renderPumpResults(selection) {
 
   try {
     const rows = await calculatePumpResultsFromSupabase(selection);
+    latestPumpRows = rows;
     pumpResultsStatus.textContent = `${rows.length} pump code(s) calculated.`;
     pumpResultsTableBody.innerHTML = rows.map((row) => renderPumpResultRow(row, selection)).join("");
   } catch (error) {
@@ -527,8 +558,10 @@ function getMaximumIncreasePercent(value) {
 
 function renderPumpResultRow(row, selection) {
   const reasons = getPumpRejectionReasons(row, selection);
+  const isAvailable = reasons.length === 0;
+  const selected = selection.selectedPump?.pumpCode === row.pumpCode;
   return `
-    <tr class="${reasons.length ? "is-unavailable" : ""}">
+    <tr class="${isAvailable ? "is-selectable" : "is-unavailable"} ${selected ? "is-selected" : ""}" data-pump-code="${escapeHtml(row.pumpCode)}">
       <td>${escapeHtml(row.pumpCode)}</td>
       <td>${formatRpm(row.requiredRpm)}</td>
       <td>${formatRpm(row.abrRpm)}</td>
@@ -565,6 +598,142 @@ function formatMaximumRpm(result) {
   return `${formatRpm(result.value)} (${result.source} ${result.percent}%)`;
 }
 
+function renderSelectionSummary(target, selection, extraRows = []) {
+  if (!target) return;
+  const rows = [
+    ["01 Type", `${labelValue(selection.application)} / ${labelValue(selection.certification)} / ${labelValue(selection.orientation)}`],
+    ["02 Flow rate", getEnteredFlowText(selection)],
+    ["03 Pressure", `${selection.pressure || 6} bar`],
+    ["04 Media Properties", `${selection.abrasivity || "-"} / ${selection.viscosity || "-"}`],
+  ];
+
+  if (selection.selectedPump) {
+    rows.push(["05 Pump selection", `${selection.selectedPump.pumpCode} (required RPM: ${formatRpm(selection.selectedPump.requiredRpm)})`]);
+  }
+
+  rows.push(...extraRows);
+  target.innerHTML = rows
+    .map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`)
+    .join("");
+}
+
+function getEnteredFlowText(selection) {
+  const source = selection.flow?.source || "lmin";
+  const labels = { lmin: "l/min", lhour: "l/h", m3hour: "m3/h" };
+  return `${selection.flow?.[source] || "-"} ${labels[source] || ""}`.trim();
+}
+
+async function loadTableRows(key) {
+  const config = getDatasetConfig(key);
+  const response = await authenticatedFetch(`${SUPABASE_URL}/rest/v1/${config.table}?${getDatasetQuery(config)}`, {
+    headers: apiHeaders(false),
+  });
+  if (!response.ok) throw new Error(`${config.label} could not be loaded.`);
+  return response.json();
+}
+
+async function renderFamilyPage(project) {
+  const selection = { ...createBlankSelection(), ...(project.selection || {}) };
+  renderProjectContext(familyProjectContext, project);
+  renderSelectionSummary(familySummary, selection);
+  familyTableBody.innerHTML = "";
+  familyStatus.textContent = "Loading pump families...";
+
+  try {
+    const rows = await loadTableRows("jp_codes");
+    familyStatus.textContent = `${rows.length} pump family option(s) loaded.`;
+    familyTableBody.innerHTML = rows.map((row) => renderFamilyRow(row, selection)).join("");
+  } catch (error) {
+    familyStatus.textContent = error.message || "Pump families could not be loaded.";
+  }
+}
+
+function renderFamilyRow(row, selection) {
+  const isAvailable = isFamilyCompatible(row, selection);
+  const isSelected = selection.selectedFamily?.pump_family === row.pump_family;
+  return `
+    <tr class="${isAvailable ? "is-selectable" : "is-unavailable"} ${isSelected ? "is-selected" : ""}" data-family="${escapeHtml(row.pump_family)}">
+      <td>${escapeHtml(row.pump_family)}</td>
+      <td>${escapeHtml(row.type)}</td>
+      <td>${escapeHtml(row.installation)}</td>
+    </tr>
+  `;
+}
+
+function isFamilyCompatible(row, selection) {
+  return normalizeSelectionText(row.type) === getRequiredFamilyType(selection)
+    && isInstallationCompatible(selection.orientation, row.installation);
+}
+
+function getRequiredFamilyType(selection) {
+  const food = selection.application === "food";
+  const atex = selection.certification === "atex";
+  if (food && atex) return "ATEX_FOOD";
+  if (food) return "FOOD";
+  if (atex) return "ATEX";
+  return "STANDARD";
+}
+
+function normalizeSelectionText(value) {
+  return String(value || "").trim().toUpperCase().replaceAll("-", "_").replaceAll(" ", "_");
+}
+
+function isInstallationCompatible(orientation, installation) {
+  const text = String(installation || "").toLowerCase();
+  if (orientation === "vertical") return text.includes("vertical") || text.includes("vertikal");
+  return text.includes("horizontal");
+}
+
+async function renderModelPage(project) {
+  const selection = { ...createBlankSelection(), ...(project.selection || {}) };
+  renderProjectContext(modelProjectContext, project);
+  const extraRows = [];
+  if (selection.selectedFamily) extraRows.push(["06 Pump family", selection.selectedFamily.pump_family]);
+  if (selection.selectedModel) extraRows.push(["07 Pump Model", selection.selectedModel.pump_model]);
+  renderSelectionSummary(modelSummary, selection, extraRows);
+  modelTableBody.innerHTML = "";
+  modelStatus.textContent = "Loading pump models...";
+
+  try {
+    const rows = await loadTableRows("sr_codes");
+    modelStatus.textContent = `${rows.length} pump model option(s) loaded.`;
+    modelTableBody.innerHTML = rows.map((row) => renderModelRow(row, selection)).join("");
+  } catch (error) {
+    modelStatus.textContent = error.message || "Pump models could not be loaded.";
+  }
+}
+
+function renderModelRow(row, selection) {
+  const isAvailable = isRotationCompatible(row.rotation, selection.selectedPump?.requiredRpm);
+  const isSelected = selection.selectedModel?.pump_model === row.pump_model;
+  return `
+    <tr class="${isAvailable ? "is-selectable" : "is-unavailable"} ${isSelected ? "is-selected" : ""}" data-model="${escapeHtml(row.pump_model)}">
+      <td>${escapeHtml(row.pump_model)}</td>
+      <td>${escapeHtml(row.phase)}</td>
+      <td>${escapeHtml(row.rotation)}</td>
+    </tr>
+  `;
+}
+
+function isRotationCompatible(rotationText, requiredRpm) {
+  const rpm = Number(requiredRpm);
+  if (!Number.isFinite(rpm)) return false;
+  const text = String(rotationText || "").replaceAll(" ", "");
+  if (!text) return false;
+
+  if (text.includes("~")) {
+    const [min, max] = text.split("~").map(Number);
+    return Number.isFinite(min) && Number.isFinite(max) && rpm >= min && rpm <= max;
+  }
+
+  if (text.includes("/")) {
+    return text.split("/").map(Number).some((value) => Number.isFinite(value) && Math.round(rpm) === value);
+  }
+
+  const value = Number(text);
+  return Number.isFinite(value) && Math.round(rpm) === value;
+}
+
 function labelValue(value) {
   return String(value || "")
     .split("-")
@@ -585,6 +754,25 @@ function validateMediaValues() {
   const selection = collectSelection();
   if (!selection.abrasivity || !selection.viscosity) {
     window.alert("Please select abrasivity and viscosity before continuing.");
+    return false;
+  }
+  return true;
+}
+
+function validatePumpSelection() {
+  const project = getActiveProject();
+  if (!project?.selection?.selectedPump) {
+    window.alert("Please select an available pump before continuing.");
+    return false;
+  }
+  return true;
+}
+
+function validateFamilySelection() {
+  if (!validatePumpSelection()) return false;
+  const project = getActiveProject();
+  if (!project?.selection?.selectedFamily) {
+    window.alert("Please select a pump family before continuing.");
     return false;
   }
   return true;
@@ -878,6 +1066,16 @@ sidebarSteps.forEach((step) => {
       saveActiveProject();
       renderPumpPage(getActiveProject());
     }
+    if (page === "family" && getActiveProject() && !validatePumpSelection()) return;
+    if (page === "family" && getActiveProject()) {
+      saveActiveProject();
+      renderFamilyPage(getActiveProject());
+    }
+    if (page === "model" && getActiveProject() && !validateFamilySelection()) return;
+    if (page === "model" && getActiveProject()) {
+      saveActiveProject();
+      renderModelPage(getActiveProject());
+    }
     if (page === "media" || page === "selector") saveActiveProject();
     showPage(page);
   });
@@ -968,6 +1166,30 @@ backToMediaBtn.addEventListener("click", () => {
   showPage("media");
 });
 
+goToFamilyBtn.addEventListener("click", () => {
+  if (!validatePumpSelection()) return;
+  saveActiveProject();
+  renderFamilyPage(getActiveProject());
+  showPage("family");
+});
+
+backToPumpBtn.addEventListener("click", () => {
+  renderPumpPage(getActiveProject());
+  showPage("pump");
+});
+
+goToModelBtn.addEventListener("click", () => {
+  if (!validateFamilySelection()) return;
+  saveActiveProject();
+  renderModelPage(getActiveProject());
+  showPage("model");
+});
+
+backToFamilyBtn.addEventListener("click", () => {
+  renderFamilyPage(getActiveProject());
+  showPage("family");
+});
+
 saveAndCloseBtn.addEventListener("click", () => {
   saveActiveProject();
   renderProjects();
@@ -984,6 +1206,65 @@ function flashSaved(button) {
 
 saveProjectBtn.addEventListener("click", () => flashSaved(saveProjectBtn));
 saveMediaBtn.addEventListener("click", () => flashSaved(saveMediaBtn));
+savePumpBtn.addEventListener("click", () => flashSaved(savePumpBtn));
+saveFamilyBtn.addEventListener("click", () => flashSaved(saveFamilyBtn));
+
+pumpResultsTableBody.addEventListener("click", (event) => {
+  const rowElement = event.target.closest("tr.is-selectable[data-pump-code]");
+  if (!rowElement) return;
+  const selectedRow = latestPumpRows.find((row) => row.pumpCode === rowElement.dataset.pumpCode);
+  const project = getActiveProject();
+  if (!selectedRow || !project) return;
+
+  project.selection = {
+    ...createBlankSelection(),
+    ...(project.selection || {}),
+    selectedPump: selectedRow,
+    selectedFamily: null,
+    selectedModel: null,
+  };
+  saveProjects();
+  renderPumpResults(project.selection);
+});
+
+familyTableBody.addEventListener("click", (event) => {
+  const rowElement = event.target.closest("tr.is-selectable[data-family]");
+  if (!rowElement) return;
+  const project = getActiveProject();
+  if (!project) return;
+
+  project.selection = {
+    ...createBlankSelection(),
+    ...(project.selection || {}),
+    selectedFamily: {
+      pump_family: rowElement.dataset.family,
+      type: rowElement.children[1]?.textContent || "",
+      installation: rowElement.children[2]?.textContent || "",
+    },
+    selectedModel: null,
+  };
+  saveProjects();
+  renderFamilyPage(project);
+});
+
+modelTableBody.addEventListener("click", (event) => {
+  const rowElement = event.target.closest("tr.is-selectable[data-model]");
+  if (!rowElement) return;
+  const project = getActiveProject();
+  if (!project) return;
+
+  project.selection = {
+    ...createBlankSelection(),
+    ...(project.selection || {}),
+    selectedModel: {
+      pump_model: rowElement.dataset.model,
+      phase: rowElement.children[1]?.textContent || "",
+      rotation: rowElement.children[2]?.textContent || "",
+    },
+  };
+  saveProjects();
+  renderModelPage(project);
+});
 
 toggleGroups.forEach((group) => {
   group.addEventListener("click", (event) => {

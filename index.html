@@ -62,6 +62,8 @@
             <button class="sidebar-step workflow-step" type="button" data-page="selector">Type and Values</button>
             <button class="sidebar-step workflow-step" type="button" data-page="media">Media Properties</button>
             <button class="sidebar-step workflow-step" type="button" data-page="pump">Pump Selection</button>
+            <button class="sidebar-step workflow-step" type="button" data-page="family">Pump Family</button>
+            <button class="sidebar-step workflow-step" type="button" data-page="model">Pump Model</button>
           </nav>
         </div>
 
@@ -308,6 +310,84 @@
 
             <div class="page-actions final-actions">
               <button class="ghost-action page-action-left" type="button" id="backToMediaBtn">Back</button>
+              <button class="primary-action compact-action page-action-center" type="button" id="savePumpBtn">Save</button>
+              <button class="primary-action compact-action page-action-right" type="button" id="goToFamilyBtn">Next</button>
+            </div>
+          </section>
+        </section>
+
+        <section class="selector-page is-hidden" id="familyPage">
+          <header class="selector-header">
+            <a class="selector-logo" href="./" aria-label="Jessberger home">
+              <img src="images/logo.png" alt="Jessberger" />
+            </a>
+            <h1>Eccentric Screw Pump Selector</h1>
+          </header>
+
+          <section class="selector-workspace" aria-label="Pump family selection">
+            <div class="project-context" id="familyProjectContext"></div>
+            <article class="selection-card pump-results-card">
+              <div class="card-heading">
+                <span>06</span>
+                <h2>Pump Family</h2>
+              </div>
+              <dl class="selection-summary" id="familySummary"></dl>
+              <p class="pump-results-status" id="familyStatus">Select a pump first.</p>
+              <div class="pump-results-table-shell">
+                <table class="pump-results-table">
+                  <thead>
+                    <tr>
+                      <th>Pump family</th>
+                      <th>Type</th>
+                      <th>Installation</th>
+                    </tr>
+                  </thead>
+                  <tbody id="familyTableBody"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <div class="page-actions final-actions">
+              <button class="ghost-action page-action-left" type="button" id="backToPumpBtn">Back</button>
+              <button class="primary-action compact-action page-action-center" type="button" id="saveFamilyBtn">Save</button>
+              <button class="primary-action compact-action page-action-right" type="button" id="goToModelBtn">Next</button>
+            </div>
+          </section>
+        </section>
+
+        <section class="selector-page is-hidden" id="modelPage">
+          <header class="selector-header">
+            <a class="selector-logo" href="./" aria-label="Jessberger home">
+              <img src="images/logo.png" alt="Jessberger" />
+            </a>
+            <h1>Eccentric Screw Pump Selector</h1>
+          </header>
+
+          <section class="selector-workspace" aria-label="Pump model selection">
+            <div class="project-context" id="modelProjectContext"></div>
+            <article class="selection-card pump-results-card">
+              <div class="card-heading">
+                <span>07</span>
+                <h2>Pump Model</h2>
+              </div>
+              <dl class="selection-summary" id="modelSummary"></dl>
+              <p class="pump-results-status" id="modelStatus">Select a pump family first.</p>
+              <div class="pump-results-table-shell">
+                <table class="pump-results-table">
+                  <thead>
+                    <tr>
+                      <th>Pump model</th>
+                      <th>Phase</th>
+                      <th>Rotation</th>
+                    </tr>
+                  </thead>
+                  <tbody id="modelTableBody"></tbody>
+                </table>
+              </div>
+            </article>
+
+            <div class="page-actions final-actions">
+              <button class="ghost-action page-action-left" type="button" id="backToFamilyBtn">Back</button>
               <button class="primary-action compact-action page-action-right" type="button" id="saveAndCloseBtn">Save and close</button>
             </div>
           </section>
@@ -375,9 +455,10 @@
       </form>
     </div>
 
-    <script src="script.js?v=20260707-reasons"></script>
+    <script src="script.js?v=20260707-family-model"></script>
   </body>
 </html>
+
 
 
 
