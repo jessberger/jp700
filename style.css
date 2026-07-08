@@ -1066,7 +1066,7 @@ h1 {
 .price-panel {
   position: sticky;
   top: 18px;
-  padding: 16px;
+  padding: 12px;
   border: 1px solid rgba(0, 92, 168, 0.14);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.94);
@@ -1253,9 +1253,9 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--blue-dark);
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .price-summary-status {
@@ -1290,27 +1290,34 @@ h1 {
 
 .price-panel .price-summary-table td,
 .price-panel .price-summary-table th {
-  padding: 8px 0;
+  padding: 4px 0;
+  font-size: 10px;
+  line-height: 1.25;
 }
 
 .price-panel .price-summary-table td:first-child {
-  max-width: 150px;
+  max-width: 132px;
   color: var(--steel);
   font-weight: 700;
   white-space: normal;
 }
 
+.price-panel .price-summary-status {
+  font-size: 10px;
+  line-height: 1.3;
+}
+
 .price-panel .price-summary-table td:nth-child(2) {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
 }
 
 .price-panel .price-summary-table tfoot th {
-  padding-top: 12px;
+  padding-top: 8px;
   border-bottom: 0;
-  font-size: 15px;
+  font-size: 12px;
 }
 
 @media (max-width: 980px) {
