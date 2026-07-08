@@ -68,7 +68,6 @@ const goToConfigBtn = document.querySelector("#goToConfigBtn");
 const backToModelBtn = document.querySelector("#backToModelBtn");
 const saveAndCloseBtn = document.querySelector("#saveAndCloseBtn");
 const goToConfigNextBtn = document.querySelector("#goToConfigNextBtn");
-const goToAccessoriesBtn = document.querySelector("#goToAccessoriesBtn");
 const goToPumpConfigurationBtn = document.querySelector("#goToPumpConfigurationBtn");
 const goToMotorSelectionBtn = document.querySelector("#goToMotorSelectionBtn");
 const backToConfigFromAccessoriesBtn = document.querySelector("#backToConfigFromAccessoriesBtn");
@@ -899,8 +898,7 @@ function renderConfigPage(project, groupIndex = currentConfigGroupIndex) {
     }
   });
   backToModelBtn.textContent = currentConfigGroupIndex === 0 ? "Back" : "Back";
-  goToConfigNextBtn.classList.toggle("is-hidden", currentConfigGroupIndex === CONFIG_OPTION_GROUPS.length - 1);
-  goToPumpConfigurationBtn.closest(".configuration-next-panel")?.classList.toggle("is-hidden", currentConfigGroupIndex !== CONFIG_OPTION_GROUPS.length - 1);
+  goToConfigNextBtn.classList.remove("is-hidden");
 }
 
 function renderPumpConfigurationPage(project) {
@@ -2199,15 +2197,13 @@ saveAndCloseBtn.addEventListener("click", () => {
 
 goToConfigNextBtn.addEventListener("click", () => {
   saveActiveProject();
-  if (currentConfigGroupIndex >= CONFIG_OPTION_GROUPS.length - 1) return;
+  if (currentConfigGroupIndex >= CONFIG_OPTION_GROUPS.length - 1) {
+    renderAccessoriesPage(getActiveProject());
+    showPage("accessories");
+    return;
+  }
   currentConfigGroupIndex += 1;
   renderConfigPage(getActiveProject(), currentConfigGroupIndex);
-});
-
-goToAccessoriesBtn.addEventListener("click", () => {
-  saveActiveProject();
-  renderAccessoriesPage(getActiveProject());
-  showPage("accessories");
 });
 
 backToConfigFromAccessoriesBtn.addEventListener("click", () => {
