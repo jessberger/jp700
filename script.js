@@ -699,7 +699,14 @@ function getPumpRejectionReasons(row, selection) {
   if (!row.matchesPressureStage) reasons.push(`(${selection.pressure} bar)`);
   if (!row.isSelectable) reasons.push("(Not vertical)");
   if (!row.isInRpmRange) reasons.push("(Out of RPM range)");
+  if (isRequiredRpmAboveMaximum(row)) reasons.push("(Required RPM > Maximum RPM)");
   return reasons;
+}
+
+function isRequiredRpmAboveMaximum(row) {
+  const requiredRpm = Number(row.requiredRpm);
+  const maximumRpm = Number(row.maximumRpm?.value);
+  return Number.isFinite(requiredRpm) && Number.isFinite(maximumRpm) && requiredRpm > maximumRpm;
 }
 
 function formatRejectionReasons(reasons) {
