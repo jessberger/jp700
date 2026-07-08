@@ -1472,6 +1472,46 @@ h1 {
   align-items: center;
 }
 
+.rule-builder {
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid rgba(0, 92, 168, 0.12);
+  border-radius: 8px;
+  background: rgba(238, 247, 255, 0.74);
+}
+
+.rule-builder-grid {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(190px, 1.2fr) minmax(160px, 1fr) minmax(190px, 1.2fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.rule-builder label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.rule-builder select {
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid rgba(134, 153, 172, 0.28);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--steel);
+  font: inherit;
+  font-size: 12px;
+}
+
+.rule-builder select[multiple] {
+  min-height: 96px;
+  padding: 4px;
+}
+
 .dataset-delete-row {
   min-height: 26px;
   padding: 0 8px;
@@ -1502,6 +1542,10 @@ h1 {
   .dataset-actions {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .rule-builder-grid {
+    grid-template-columns: 1fr;
   }
 }
 

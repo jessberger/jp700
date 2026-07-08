@@ -469,6 +469,28 @@
 
               <div class="dataset-tabs" id="datasetTabs" aria-label="Dataset tabs"></div>
 
+              <section class="rule-builder is-hidden" id="ruleBuilder" aria-label="Configuration rule builder">
+                <div class="rule-builder-grid">
+                  <label>
+                    Input
+                    <select id="ruleInputCode"></select>
+                  </label>
+                  <label>
+                    Input selection
+                    <select id="ruleInputSelection" multiple></select>
+                  </label>
+                  <label>
+                    Output
+                    <select id="ruleOutputCode"></select>
+                  </label>
+                  <label>
+                    Output selection
+                    <select id="ruleOutputSelection" multiple></select>
+                  </label>
+                  <button class="primary-action compact-action" type="button" id="addRuleBuilderBtn">Add rule</button>
+                </div>
+              </section>
+
               <div class="dataset-table-shell">
                 <table class="dataset-table" id="datasetTable">
                   <thead id="datasetTableHead"></thead>
@@ -518,7 +540,7 @@
       </form>
     </div>
 
-    <script src="script.js?v=20260707-rules-editor"></script>
+    <script src="script.js?v=20260708-rule-builder"></script>
   </body>
 </html>
 

@@ -15,6 +15,12 @@ const datasetTableBody = document.querySelector("#datasetTableBody");
 const datasetStatus = document.querySelector("#datasetStatus");
 const saveDatasetBtn = document.querySelector("#saveDatasetBtn");
 const addDatasetRowBtn = document.querySelector("#addDatasetRowBtn");
+const ruleBuilder = document.querySelector("#ruleBuilder");
+const ruleInputCode = document.querySelector("#ruleInputCode");
+const ruleInputSelection = document.querySelector("#ruleInputSelection");
+const ruleOutputCode = document.querySelector("#ruleOutputCode");
+const ruleOutputSelection = document.querySelector("#ruleOutputSelection");
+const addRuleBuilderBtn = document.querySelector("#addRuleBuilderBtn");
 
 const authForm = document.querySelector("#authForm");
 const usernameInput = document.querySelector("#usernameInput");
@@ -158,6 +164,10 @@ const DATASET_CONFIG = [
     { key: "output_code", label: "Output", type: "text" },
     { key: "output_selection", label: "Output selection", type: "text" },
   ]},
+];
+
+const PUMP_CODE_OPTIONS = [
+  "12.1", "12.2", "25.1", "25.2", "50.1", "50.2", "50L.1", "80.1", "80.2", "200.1", "200.2", "300.1", "300.2", "350.1", "350.2", "350L.1", "7032.1", "7052.1", "7082.1", "7112.1", "7115.1", "7115.2", "7115.4", "7120.1", "7120.2", "7120.4",
 ];
 
 const CONFIG_OPTION_GROUPS = [
@@ -1192,6 +1202,7 @@ function renderDatasetTabs() {
 function renderDatasetTable(config) {
   const editable = canEditDatasets();
   const canChangeRows = editable && config.allowInsertDelete;
+  const useRuleBuilder = config.key === "configuration_rules" && editable;
   datasetTableHead.innerHTML = `<tr>${config.columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join("")}${canChangeRows ? "<th></th>" : ""}</tr>`;
   datasetTableBody.innerHTML = datasetRows.map((row, rowIndex) => `
     <tr>
@@ -1204,10 +1215,91 @@ function renderDatasetTable(config) {
     </tr>
   `).join("");
 
-  addDatasetRowBtn.classList.toggle("is-hidden", !canChangeRows);
+  ruleBuilder.classList.toggle("is-hidden", !useRuleBuilder);
+  addDatasetRowBtn.classList.toggle("is-hidden", !canChangeRows || useRuleBuilder);
+  if (useRuleBuilder) renderRuleBuilder();
   datasetStatus.textContent = editable
     ? `${datasetRows.length} rows loaded. Edit cells and save changes.`
     : `${datasetRows.length} rows loaded. Read-only access.`;
+}
+
+function renderRuleBuilder() {
+  renderSelectOptions(ruleInputCode, getRuleInputTargets(), ruleInputCode.value);
+  renderSelectOptions(ruleOutputCode, getRuleOutputTargets(), ruleOutputCode.value);
+  renderRuleSelectionOptions(ruleInputSelection, ruleInputCode.value);
+  renderRuleSelectionOptions(ruleOutputSelection, ruleOutputCode.value);
+}
+
+function renderSelectOptions(select, options, selectedValue = "") {
+  const value = options.some((option) => option.value === selectedValue) ? selectedValue : options[0]?.value || "";
+  select.innerHTML = options
+    .map((option) => `<option value="${escapeHtml(option.value)}" ${option.value === value ? "selected" : ""}>${escapeHtml(option.label)}</option>`)
+    .join("");
+}
+
+function renderRuleSelectionOptions(select, code) {
+  const selectedValues = new Set(getSelectedValues(select));
+  const options = getRuleSelectionOptions(code);
+  select.innerHTML = options
+    .map((option) => `<option value="${escapeHtml(option.value)}" ${selectedValues.has(option.value) ? "selected" : ""}>${escapeHtml(option.label)}</option>`)
+    .join("");
+}
+
+function getRuleInputTargets() {
+  return [
+    { value: "01.APPLICATION", label: "01 Type / Application" },
+    { value: "01.CERTIFICATION", label: "01 Type / Certification" },
+    { value: "01.ORIENTATION", label: "01 Type / Orientation" },
+    { value: "PUMP_CODE", label: "05 Pump selection / Pump code" },
+    ...getConfigRuleTargets(),
+  ];
+}
+
+function getRuleOutputTargets() {
+  return getConfigRuleTargets();
+}
+
+function getConfigRuleTargets() {
+  return CONFIG_OPTION_GROUPS.flatMap((group, groupIndex) => (
+    group.items.map((item, itemIndex) => {
+      const code = getConfigVariableCode(groupIndex, itemIndex);
+      return { value: code, label: `${code} ${item.key}` };
+    })
+  ));
+}
+
+function getRuleSelectionOptions(code) {
+  if (code === "01.APPLICATION") {
+    return [
+      { value: "FOOD", label: "Food" },
+      { value: "NON_FOOD", label: "Non-Food" },
+    ];
+  }
+  if (code === "01.CERTIFICATION") {
+    return [
+      { value: "ATEX", label: "ATEX" },
+      { value: "NON_ATEX", label: "Non-ATEX" },
+    ];
+  }
+  if (code === "01.ORIENTATION") {
+    return [
+      { value: "VERTICAL", label: "Vertical" },
+      { value: "HORIZONTAL", label: "Horizontal" },
+    ];
+  }
+  if (code === "PUMP_CODE") {
+    return PUMP_CODE_OPTIONS.map((pumpCode) => ({ value: pumpCode, label: pumpCode }));
+  }
+  const match = findConfigVariableByCode(code);
+  if (!match) return [];
+  return match.item.options.map((option, index) => ({
+    value: String(index + 1),
+    label: `${index + 1} - ${option}`,
+  }));
+}
+
+function getSelectedValues(select) {
+  return Array.from(select.selectedOptions || []).map((option) => option.value);
 }
 
 async function loadDataset(key) {
@@ -1216,6 +1308,7 @@ async function loadDataset(key) {
     datasetTableHead.innerHTML = "";
     datasetTableBody.innerHTML = "";
     addDatasetRowBtn.classList.add("is-hidden");
+    ruleBuilder.classList.add("is-hidden");
     return;
   }
 
@@ -1259,6 +1352,53 @@ datasetTabs.addEventListener("click", (event) => {
   const button = event.target.closest(".dataset-tab");
   if (!button) return;
   loadDataset(button.dataset.dataset);
+});
+
+ruleInputCode.addEventListener("change", () => {
+  renderRuleSelectionOptions(ruleInputSelection, ruleInputCode.value);
+});
+
+ruleOutputCode.addEventListener("change", () => {
+  renderRuleSelectionOptions(ruleOutputSelection, ruleOutputCode.value);
+});
+
+addRuleBuilderBtn.addEventListener("click", async () => {
+  if (!canEditDatasets() || activeDatasetKey !== "configuration_rules") return;
+
+  const inputSelection = getSelectedValues(ruleInputSelection);
+  const outputSelection = getSelectedValues(ruleOutputSelection);
+  if (!ruleInputCode.value || inputSelection.length === 0 || !ruleOutputCode.value || outputSelection.length === 0) {
+    datasetStatus.textContent = "Select input, input selection, output and output selection first.";
+    return;
+  }
+
+  addRuleBuilderBtn.disabled = true;
+  addRuleBuilderBtn.textContent = "Adding...";
+  const response = await authenticatedFetch(`${SUPABASE_URL}/rest/v1/configuration_rules`, {
+    method: "POST",
+    headers: { ...apiHeaders(), Prefer: "return=minimal" },
+    body: JSON.stringify({
+      input_code: ruleInputCode.value,
+      input_selection: inputSelection.join(","),
+      output_code: ruleOutputCode.value,
+      output_selection: outputSelection.join(","),
+    }),
+  });
+
+  addRuleBuilderBtn.disabled = false;
+  addRuleBuilderBtn.textContent = "Add rule";
+
+  if (!response.ok) {
+    datasetStatus.classList.add("is-error");
+    datasetStatus.textContent = "Rule could not be added. Please check permissions.";
+    return;
+  }
+
+  configurationRulesLoaded = false;
+  configurationRules = [];
+  await loadDataset("configuration_rules");
+  datasetStatus.classList.add("is-success");
+  datasetStatus.textContent = "Rule added.";
 });
 
 addDatasetRowBtn.addEventListener("click", () => {
