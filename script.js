@@ -21,6 +21,14 @@ const ruleInputSelection = document.querySelector("#ruleInputSelection");
 const ruleOutputCode = document.querySelector("#ruleOutputCode");
 const ruleOutputSelection = document.querySelector("#ruleOutputSelection");
 const addRuleBuilderBtn = document.querySelector("#addRuleBuilderBtn");
+const priceBuilder = document.querySelector("#priceBuilder");
+const priceItemCode = document.querySelector("#priceItemCode");
+const priceSelectionCode = document.querySelector("#priceSelectionCode");
+const priceType = document.querySelector("#priceType");
+const priceValue = document.querySelector("#priceValue");
+const priceCurrency = document.querySelector("#priceCurrency");
+const priceNote = document.querySelector("#priceNote");
+const addPriceBuilderBtn = document.querySelector("#addPriceBuilderBtn");
 
 const authForm = document.querySelector("#authForm");
 const usernameInput = document.querySelector("#usernameInput");
@@ -83,6 +91,7 @@ const configurationCode = document.querySelector("#configurationCode");
 const configurationOptions = document.querySelector("#configurationOptions");
 const pumpConfigCode = document.querySelector("#pumpConfigCode");
 const pumpConfigurationGrid = document.querySelector("#pumpConfigurationGrid");
+const priceSummary = document.querySelector("#priceSummary");
 const toggleGroups = document.querySelectorAll(".segmented-control");
 const mediaGroups = document.querySelectorAll(".option-stack");
 const flowInputs = {
@@ -113,6 +122,8 @@ let latestPumpRows = [];
 let currentConfigGroupIndex = 0;
 let configurationRules = [];
 let configurationRulesLoaded = false;
+let priceRules = [];
+let priceRulesLoaded = false;
 const DATASET_CONFIG = [
   { key: "pump_limits", label: "1.Pump_limits", table: "pump_limits", primaryKey: ["pump_code"], orderBy: ["sort_order", "pump_code"], columns: [
     { key: "pump_code", label: "Pump code", type: "text", locked: true },
@@ -163,6 +174,17 @@ const DATASET_CONFIG = [
     { key: "input_selection", label: "Input selection", type: "text" },
     { key: "output_code", label: "Output", type: "text" },
     { key: "output_selection", label: "Output selection", type: "text" },
+  ]},
+  { key: "price_rules", label: "8.Price_Rules", table: "price_rules", primaryKey: ["price_id"], orderBy: ["price_id"], allowInsertDelete: true, columns: [
+    { key: "price_id", label: "ID", type: "integer", locked: true },
+    { key: "item_code", label: "Item code", type: "text" },
+    { key: "item_label", label: "Item label", type: "text" },
+    { key: "selection_code", label: "Selection code", type: "text" },
+    { key: "selection_label", label: "Selection label", type: "text" },
+    { key: "price_type", label: "Type", type: "text" },
+    { key: "price", label: "Price", type: "number" },
+    { key: "currency", label: "Currency", type: "text" },
+    { key: "note", label: "Note", type: "text" },
   ]},
 ];
 
@@ -866,6 +888,123 @@ function renderPumpConfigurationPage(project) {
   pumpConfigurationGrid.innerHTML = getPumpConfigurationGroups(selection)
     .map((group) => renderPumpConfigurationGroup(group))
     .join("");
+  renderPriceSummary(selection);
+}
+
+async function renderPriceSummary(selection) {
+  if (!priceSummary) return;
+  if (!canViewDatasets()) {
+    priceSummary.classList.add("is-hidden");
+    return;
+  }
+
+  priceSummary.classList.remove("is-hidden");
+  priceSummary.innerHTML = `<h3>Price Summary</h3><p class="price-summary-status">Loading prices...</p>`;
+
+  await loadPriceRules();
+  const entries = getSelectedPriceInputs(selection)
+    .flatMap((input) => {
+      const matches = priceRules.filter((rule) => rule.item_code === input.itemCode && rule.selection_code === input.selectionCode);
+      return matches.map((rule) => ({
+        label: rule.selection_label || input.selectionLabel,
+        type: String(rule.price_type || "ADD").toUpperCase(),
+        price: Number(rule.price || 0),
+        currency: rule.currency || "EUR",
+        note: rule.note || "",
+      }));
+    });
+
+  if (entries.length === 0) {
+    priceSummary.innerHTML = `<h3>Price Summary</h3><p class="price-summary-status">No price rows found for selected items.</p>`;
+    return;
+  }
+
+  const currency = entries.find((entry) => entry.currency)?.currency || "EUR";
+  const total = entries.reduce((sum, entry) => {
+    if (entry.type === "INCLUDED") return sum;
+    return sum + entry.price;
+  }, 0);
+
+  priceSummary.innerHTML = `
+    <h3>Price Summary</h3>
+    <table class="price-summary-table">
+      <tbody>
+        ${entries.map((entry) => `
+          <tr>
+            <td>${escapeHtml(entry.label)}</td>
+            <td>${escapeHtml(entry.type)}</td>
+            <td>${entry.type === "INCLUDED" ? "Included" : formatPrice(entry.price, entry.currency)}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="2">Total</th>
+          <th>${formatPrice(total, currency)}</th>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+}
+
+async function loadPriceRules() {
+  if (priceRulesLoaded) return priceRules;
+  try {
+    priceRules = await loadTableRows("price_rules");
+  } catch (error) {
+    priceRules = [];
+  }
+  priceRulesLoaded = true;
+  return priceRules;
+}
+
+function getSelectedPriceInputs(selection) {
+  const inputs = [];
+  if (selection.selectedPump?.pumpCode) {
+    inputs.push({
+      itemCode: "05.PUMP",
+      itemLabel: "05 Pump selection",
+      selectionCode: selection.selectedPump.pumpCode,
+      selectionLabel: `Pump ${selection.selectedPump.pumpCode}`,
+    });
+  }
+  if (selection.selectedFamily?.pump_family) {
+    inputs.push({
+      itemCode: "06.FAMILY",
+      itemLabel: "06 Pump family",
+      selectionCode: cleanPumpFamilyCode(selection.selectedFamily.pump_family),
+      selectionLabel: cleanPumpFamilyCode(selection.selectedFamily.pump_family),
+    });
+  }
+  if (selection.selectedModel) {
+    inputs.push({
+      itemCode: "07.MODEL",
+      itemLabel: "07 Pump model",
+      selectionCode: getModelCode(selection.selectedModel),
+      selectionLabel: formatModelLabel(selection.selectedModel),
+    });
+  }
+
+  CONFIG_OPTION_GROUPS.forEach((group, groupIndex) => {
+    group.items.forEach((item, itemIndex) => {
+      const selectedOption = selection.configOptions?.[item.key];
+      if (!selectedOption) return;
+      const optionIndex = item.options.findIndex((option) => option === selectedOption);
+      if (optionIndex < 0) return;
+      const itemCode = getConfigVariableCode(groupIndex, itemIndex);
+      inputs.push({
+        itemCode,
+        itemLabel: `${itemCode} ${item.key}`,
+        selectionCode: String(optionIndex + 1),
+        selectionLabel: selectedOption,
+      });
+    });
+  });
+  return inputs;
+}
+
+function formatPrice(value, currency = "EUR") {
+  return `${Number(value || 0).toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
 }
 
 function getPumpConfigurationGroups(selection) {
@@ -1203,6 +1342,7 @@ function renderDatasetTable(config) {
   const editable = canEditDatasets();
   const canChangeRows = editable && config.allowInsertDelete;
   const useRuleBuilder = config.key === "configuration_rules" && editable;
+  const usePriceBuilder = config.key === "price_rules" && editable;
   datasetTableHead.innerHTML = `<tr>${config.columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join("")}${canChangeRows ? "<th></th>" : ""}</tr>`;
   datasetTableBody.innerHTML = datasetRows.map((row, rowIndex) => `
     <tr>
@@ -1216,8 +1356,10 @@ function renderDatasetTable(config) {
   `).join("");
 
   ruleBuilder.classList.toggle("is-hidden", !useRuleBuilder);
-  addDatasetRowBtn.classList.toggle("is-hidden", !canChangeRows || useRuleBuilder);
+  priceBuilder.classList.toggle("is-hidden", !usePriceBuilder);
+  addDatasetRowBtn.classList.toggle("is-hidden", !canChangeRows || useRuleBuilder || usePriceBuilder);
   if (useRuleBuilder) renderRuleBuilder();
+  if (usePriceBuilder) renderPriceBuilder();
   datasetStatus.textContent = editable
     ? `${datasetRows.length} rows loaded. Edit cells and save changes.`
     : `${datasetRows.length} rows loaded. Read-only access.`;
@@ -1302,6 +1444,43 @@ function getSelectedValues(select) {
   return Array.from(select.selectedOptions || []).map((option) => option.value);
 }
 
+function renderPriceBuilder() {
+  renderSelectOptions(priceItemCode, getPriceItemTargets(), priceItemCode.value);
+  renderSelectOptions(priceSelectionCode, getPriceSelectionOptions(priceItemCode.value), priceSelectionCode.value);
+  if (!priceCurrency.value) priceCurrency.value = "EUR";
+}
+
+function getPriceItemTargets() {
+  return [
+    { value: "05.PUMP", label: "05 Pump selection" },
+    { value: "07.MODEL", label: "07 Pump model" },
+    ...getConfigRuleTargets(),
+  ];
+}
+
+function getPriceSelectionOptions(itemCode) {
+  if (itemCode === "05.PUMP") return PUMP_CODE_OPTIONS.map((pumpCode) => ({ value: pumpCode, label: pumpCode }));
+  if (itemCode === "06.FAMILY") return [{ value: "", label: "Type family code manually in table if needed" }];
+  if (itemCode === "07.MODEL") return [
+    { value: "SR", label: "SR" },
+    { value: "FK", label: "FK" },
+    { value: "DR", label: "DR" },
+    { value: "GM", label: "GM" },
+    { value: "DR EM", label: "DR EM" },
+    { value: "G", label: "G" },
+    { value: "V", label: "V" },
+  ];
+  return getRuleSelectionOptions(itemCode);
+}
+
+function getTargetLabel(targets, value) {
+  return targets.find((target) => target.value === value)?.label || value;
+}
+
+function getSelectionLabel(itemCode, selectionCode) {
+  return getPriceSelectionOptions(itemCode).find((option) => option.value === selectionCode)?.label || selectionCode;
+}
+
 async function loadDataset(key) {
   if (!canViewDatasets()) {
     datasetStatus.textContent = "You do not have access to datasets.";
@@ -1309,6 +1488,7 @@ async function loadDataset(key) {
     datasetTableBody.innerHTML = "";
     addDatasetRowBtn.classList.add("is-hidden");
     ruleBuilder.classList.add("is-hidden");
+    priceBuilder.classList.add("is-hidden");
     return;
   }
 
@@ -1362,6 +1542,10 @@ ruleOutputCode.addEventListener("change", () => {
   renderRuleSelectionOptions(ruleOutputSelection, ruleOutputCode.value);
 });
 
+priceItemCode.addEventListener("change", () => {
+  renderSelectOptions(priceSelectionCode, getPriceSelectionOptions(priceItemCode.value), "");
+});
+
 addRuleBuilderBtn.addEventListener("click", async () => {
   if (!canEditDatasets() || activeDatasetKey !== "configuration_rules") return;
 
@@ -1399,6 +1583,50 @@ addRuleBuilderBtn.addEventListener("click", async () => {
   await loadDataset("configuration_rules");
   datasetStatus.classList.add("is-success");
   datasetStatus.textContent = "Rule added.";
+});
+
+addPriceBuilderBtn.addEventListener("click", async () => {
+  if (!canEditDatasets() || activeDatasetKey !== "price_rules") return;
+  if (!priceItemCode.value || !priceSelectionCode.value || !priceType.value) {
+    datasetStatus.textContent = "Select item, selection and type first.";
+    return;
+  }
+
+  addPriceBuilderBtn.disabled = true;
+  addPriceBuilderBtn.textContent = "Adding...";
+  const itemLabel = getTargetLabel(getPriceItemTargets(), priceItemCode.value);
+  const selectionLabel = getSelectionLabel(priceItemCode.value, priceSelectionCode.value);
+  const response = await authenticatedFetch(`${SUPABASE_URL}/rest/v1/price_rules`, {
+    method: "POST",
+    headers: { ...apiHeaders(), Prefer: "return=minimal" },
+    body: JSON.stringify({
+      item_code: priceItemCode.value,
+      item_label: itemLabel,
+      selection_code: priceSelectionCode.value,
+      selection_label: selectionLabel,
+      price_type: priceType.value,
+      price: priceValue.value === "" ? null : Number(priceValue.value),
+      currency: priceCurrency.value || "EUR",
+      note: priceNote.value || null,
+    }),
+  });
+
+  addPriceBuilderBtn.disabled = false;
+  addPriceBuilderBtn.textContent = "Add price";
+
+  if (!response.ok) {
+    datasetStatus.classList.add("is-error");
+    datasetStatus.textContent = "Price row could not be added. Please check permissions.";
+    return;
+  }
+
+  priceRulesLoaded = false;
+  priceRules = [];
+  priceValue.value = "";
+  priceNote.value = "";
+  await loadDataset("price_rules");
+  datasetStatus.classList.add("is-success");
+  datasetStatus.textContent = "Price row added.";
 });
 
 addDatasetRowBtn.addEventListener("click", () => {
@@ -1452,7 +1680,7 @@ datasetTableBody.addEventListener("click", async (event) => {
     return;
   }
 
-  const confirmed = window.confirm("Delete this rule?");
+  const confirmed = window.confirm(`Delete this ${config.key === "price_rules" ? "price row" : "rule"}?`);
   if (!confirmed) return;
 
   const response = await authenticatedFetch(`${SUPABASE_URL}/rest/v1/${config.table}?${datasetRowFilter(config, row)}`, {
@@ -1468,9 +1696,13 @@ datasetTableBody.addEventListener("click", async (event) => {
 
   configurationRulesLoaded = false;
   configurationRules = [];
+  if (config.key === "price_rules") {
+    priceRulesLoaded = false;
+    priceRules = [];
+  }
   await loadDataset(activeDatasetKey);
   datasetStatus.classList.add("is-success");
-  datasetStatus.textContent = "Rule deleted.";
+  datasetStatus.textContent = config.key === "price_rules" ? "Price row deleted." : "Rule deleted.";
 });
 
 saveDatasetBtn.addEventListener("click", async () => {
@@ -1524,6 +1756,10 @@ saveDatasetBtn.addEventListener("click", async () => {
   if (activeDatasetKey === "configuration_rules") {
     configurationRulesLoaded = false;
     configurationRules = [];
+  }
+  if (activeDatasetKey === "price_rules") {
+    priceRulesLoaded = false;
+    priceRules = [];
   }
   await loadDataset(activeDatasetKey);
   datasetStatus.classList.add("is-success");

@@ -443,6 +443,7 @@
               </div>
               <div class="configuration-code" id="pumpConfigCode"></div>
               <div class="pump-configuration-grid" id="pumpConfigurationGrid"></div>
+              <section class="price-summary is-hidden" id="priceSummary" aria-label="Price summary"></section>
               <button class="primary-action compact-action motor-selection-action" type="button" id="goToMotorSelectionBtn">Motor selection</button>
             </article>
 
@@ -488,6 +489,40 @@
                     <select id="ruleOutputSelection" multiple></select>
                   </label>
                   <button class="primary-action compact-action" type="button" id="addRuleBuilderBtn">Add rule</button>
+                </div>
+              </section>
+
+              <section class="rule-builder is-hidden" id="priceBuilder" aria-label="Price builder">
+                <div class="price-builder-grid">
+                  <label>
+                    Item
+                    <select id="priceItemCode"></select>
+                  </label>
+                  <label>
+                    Selection
+                    <select id="priceSelectionCode"></select>
+                  </label>
+                  <label>
+                    Type
+                    <select id="priceType">
+                      <option value="BASE">Base</option>
+                      <option value="ADD">Add</option>
+                      <option value="INCLUDED">Included</option>
+                    </select>
+                  </label>
+                  <label>
+                    Price
+                    <input id="priceValue" type="number" step="0.01" />
+                  </label>
+                  <label>
+                    Currency
+                    <input id="priceCurrency" type="text" value="EUR" />
+                  </label>
+                  <label>
+                    Note
+                    <input id="priceNote" type="text" />
+                  </label>
+                  <button class="primary-action compact-action" type="button" id="addPriceBuilderBtn">Add price</button>
                 </div>
               </section>
 
@@ -540,7 +575,7 @@
       </form>
     </div>
 
-    <script src="script.js?v=20260708-pump-config-wrap"></script>
+    <script src="script.js?v=20260708-price-builder"></script>
   </body>
 </html>
 
