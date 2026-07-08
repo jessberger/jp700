@@ -65,6 +65,7 @@
             <button class="sidebar-step workflow-step" type="button" data-page="family">Pump Family</button>
             <button class="sidebar-step workflow-step" type="button" data-page="model">Pump Model</button>
             <button class="sidebar-step workflow-step" type="button" data-page="config">Configuration</button>
+            <button class="sidebar-step workflow-step" type="button" data-page="accessories">Optional Accessories</button>
             <button class="sidebar-step workflow-step" type="button" data-page="pump-config">Pump Configuration</button>
           </nav>
         </div>
@@ -416,7 +417,7 @@
                 <div class="configuration-options" id="configurationOptions"></div>
                 <section class="configuration-next-panel" aria-label="Next pump package step">
                   <div class="config-group-label">Next</div>
-                  <button class="primary-action compact-action motor-selection-action" type="button" id="goToPumpConfigurationBtn">Pump configuration</button>
+                  <button class="primary-action compact-action motor-selection-action" type="button" id="goToAccessoriesBtn">Optional accessories</button>
                 </section>
               </article>
 
@@ -427,6 +428,36 @@
               <button class="ghost-action page-action-left" type="button" id="backToModelBtn">Back</button>
               <button class="primary-action compact-action page-action-center" type="button" id="saveAndCloseBtn">Save</button>
               <button class="primary-action compact-action page-action-right" type="button" id="goToConfigNextBtn">Next</button>
+            </div>
+          </section>
+        </section>
+        <section class="selector-page is-hidden" id="accessoriesPage">
+          <header class="selector-header">
+            <a class="selector-logo" href="./" aria-label="Jessberger home">
+              <img src="images/logo.png" alt="Jessberger" />
+            </a>
+            <h1>Eccentric Screw Pump Selector</h1>
+          </header>
+
+          <section class="selector-workspace" aria-label="Optional accessories">
+            <div class="project-context" id="accessoriesProjectContext"></div>
+            <div class="configuration-layout">
+              <article class="selection-card pump-results-card">
+                <div class="configuration-code" id="accessoriesCode"></div>
+                <div class="card-heading">
+                  <span>14</span>
+                  <h2>Optional Accessories</h2>
+                </div>
+                <div class="accessories-list" id="accessoriesList"></div>
+              </article>
+
+              <aside class="price-panel" id="accessoriesPriceSummary" aria-label="Live price summary"></aside>
+            </div>
+
+            <div class="page-actions final-actions">
+              <button class="ghost-action page-action-left" type="button" id="backToConfigFromAccessoriesBtn">Back</button>
+              <button class="primary-action compact-action page-action-center" type="button" id="saveAccessoriesBtn">Save</button>
+              <button class="primary-action compact-action page-action-right" type="button" id="goToPumpConfigurationBtn">Next</button>
             </div>
           </section>
         </section>
@@ -442,7 +473,7 @@
             <div class="project-context" id="pumpConfigProjectContext"></div>
             <article class="selection-card pump-results-card">
               <div class="card-heading">
-                <span>14</span>
+                <span>15</span>
                 <h2>Pump Configuration</h2>
               </div>
               <div class="configuration-code" id="pumpConfigCode"></div>
@@ -579,7 +610,7 @@
       </form>
     </div>
 
-    <script src="script.js?v=20260708-config-price-list"></script>
+    <script src="script.js?v=20260708-optional-accessories"></script>
   </body>
 </html>
 

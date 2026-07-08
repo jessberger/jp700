@@ -7,6 +7,7 @@ const pumpPage = document.querySelector("#pumpPage");
 const familyPage = document.querySelector("#familyPage");
 const modelPage = document.querySelector("#modelPage");
 const configPage = document.querySelector("#configPage");
+const accessoriesPage = document.querySelector("#accessoriesPage");
 const pumpConfigPage = document.querySelector("#pumpConfigPage");
 const datasetsPage = document.querySelector("#datasetsPage");
 const datasetTabs = document.querySelector("#datasetTabs");
@@ -66,8 +67,11 @@ const goToConfigBtn = document.querySelector("#goToConfigBtn");
 const backToModelBtn = document.querySelector("#backToModelBtn");
 const saveAndCloseBtn = document.querySelector("#saveAndCloseBtn");
 const goToConfigNextBtn = document.querySelector("#goToConfigNextBtn");
+const goToAccessoriesBtn = document.querySelector("#goToAccessoriesBtn");
 const goToPumpConfigurationBtn = document.querySelector("#goToPumpConfigurationBtn");
 const goToMotorSelectionBtn = document.querySelector("#goToMotorSelectionBtn");
+const backToConfigFromAccessoriesBtn = document.querySelector("#backToConfigFromAccessoriesBtn");
+const saveAccessoriesBtn = document.querySelector("#saveAccessoriesBtn");
 const backToConfigBtn = document.querySelector("#backToConfigBtn");
 const savePumpConfigBtn = document.querySelector("#savePumpConfigBtn");
 const projectContext = document.querySelector("#projectContext");
@@ -76,6 +80,7 @@ const pumpProjectContext = document.querySelector("#pumpProjectContext");
 const familyProjectContext = document.querySelector("#familyProjectContext");
 const modelProjectContext = document.querySelector("#modelProjectContext");
 const configProjectContext = document.querySelector("#configProjectContext");
+const accessoriesProjectContext = document.querySelector("#accessoriesProjectContext");
 const pumpConfigProjectContext = document.querySelector("#pumpConfigProjectContext");
 const pumpResultsStatus = document.querySelector("#pumpResultsStatus");
 const pumpResultsTableBody = document.querySelector("#pumpResultsTableBody");
@@ -90,6 +95,9 @@ const configStepTitle = document.querySelector("#configStepTitle");
 const configurationCode = document.querySelector("#configurationCode");
 const configurationOptions = document.querySelector("#configurationOptions");
 const configPriceSummary = document.querySelector("#configPriceSummary");
+const accessoriesCode = document.querySelector("#accessoriesCode");
+const accessoriesList = document.querySelector("#accessoriesList");
+const accessoriesPriceSummary = document.querySelector("#accessoriesPriceSummary");
 const pumpConfigCode = document.querySelector("#pumpConfigCode");
 const pumpConfigurationGrid = document.querySelector("#pumpConfigurationGrid");
 const priceSummary = document.querySelector("#priceSummary");
@@ -262,6 +270,7 @@ function showPage(page) {
   familyPage.classList.toggle("is-hidden", page !== "family");
   modelPage.classList.toggle("is-hidden", page !== "model");
   configPage.classList.toggle("is-hidden", page !== "config");
+  accessoriesPage.classList.toggle("is-hidden", page !== "accessories");
   pumpConfigPage.classList.toggle("is-hidden", page !== "pump-config");
   datasetsPage.classList.toggle("is-hidden", page !== "datasets");
   workspaceShell.dataset.page = page;
@@ -327,6 +336,7 @@ function createBlankSelection() {
     selectedFamily: null,
     selectedModel: null,
     configOptions: {},
+    optionalAccessories: [],
   };
 }
 
@@ -386,6 +396,7 @@ function openProject(projectId, targetPage = "selector") {
   if (targetPage === "family") renderFamilyPage(project);
   if (targetPage === "model") renderModelPage(project);
   if (targetPage === "config") renderConfigPage(project);
+  if (targetPage === "accessories") renderAccessoriesPage(project);
   if (targetPage === "pump-config") renderPumpConfigurationPage(project);
   showPage(targetPage);
 }
@@ -438,6 +449,7 @@ function hydrateProject(project) {
   renderProjectContext(familyProjectContext, project);
   renderProjectContext(modelProjectContext, project);
   renderProjectContext(configProjectContext, project);
+  renderProjectContext(accessoriesProjectContext, project);
   setToggleValue("application", selection.application);
   setToggleValue("certification", selection.certification);
   setToggleValue("orientation", selection.orientation);
@@ -897,6 +909,53 @@ function renderPumpConfigurationPage(project) {
   renderPumpConfigurationList(selection);
 }
 
+async function renderAccessoriesPage(project) {
+  const selection = { ...createBlankSelection(), ...(project.selection || {}) };
+  renderProjectContext(accessoriesProjectContext, project);
+  accessoriesCode.textContent = getConfigurationCode(selection);
+  accessoriesList.innerHTML = `<p class="price-summary-status">Loading accessories...</p>`;
+  renderPriceSummary(selection, accessoriesPriceSummary, { compact: true });
+
+  await loadPriceRules();
+  const accessories = getAccessoryOptions();
+  if (accessories.length === 0) {
+    accessoriesList.innerHTML = `<p class="price-summary-status">No optional accessories defined in Price_Rules.</p>`;
+    renderPriceSummary(selection, accessoriesPriceSummary, { compact: true });
+    return;
+  }
+
+  const selected = new Set(selection.optionalAccessories || []);
+  accessoriesList.innerHTML = accessories.map((accessory) => `
+    <label class="accessory-option">
+      <input type="checkbox" value="${escapeHtml(accessory.selectionCode)}" ${selected.has(accessory.selectionCode) ? "checked" : ""} />
+      <span>
+        <strong>${escapeHtml(accessory.label)}</strong>
+        <small>${escapeHtml(formatLinePrice(accessory.priceEntry))}</small>
+      </span>
+    </label>
+  `).join("");
+}
+
+function getAccessoryOptions() {
+  const seen = new Set();
+  return priceRules
+    .filter((rule) => rule.item_code === "14.ACCESSORY")
+    .map((rule) => ({
+      selectionCode: rule.selection_code,
+      label: rule.selection_label || rule.selection_code,
+      priceEntry: {
+        type: String(rule.price_type || "ADD").toUpperCase(),
+        price: Number(rule.price || 0),
+        currency: rule.currency || "EUR",
+      },
+    }))
+    .filter((accessory) => {
+      if (!accessory.selectionCode || seen.has(accessory.selectionCode)) return false;
+      seen.add(accessory.selectionCode);
+      return true;
+    });
+}
+
 async function renderPumpConfigurationList(selection) {
   pumpConfigurationGrid.innerHTML = `<p class="price-summary-status">Loading configuration...</p>`;
   if (priceSummary) priceSummary.classList.add("is-hidden");
@@ -1064,6 +1123,14 @@ function getSelectedPriceInputs(selection) {
       });
     });
   });
+  (selection.optionalAccessories || []).forEach((selectionCode) => {
+    inputs.push({
+      itemCode: "14.ACCESSORY",
+      itemLabel: "14 Optional accessories",
+      selectionCode,
+      selectionLabel: getAccessoryOptions().find((accessory) => accessory.selectionCode === selectionCode)?.label || selectionCode,
+    });
+  });
   return inputs;
 }
 
@@ -1147,6 +1214,14 @@ function getPumpConfigurationRows(selection) {
         label: item.key,
         value: selectedOption,
       });
+    });
+  });
+  (selection.optionalAccessories || []).forEach((selectionCode) => {
+    rows.push({
+      itemCode: "14.ACCESSORY",
+      selectionCode,
+      label: "Optional accessory",
+      value: getAccessoryOptions().find((accessory) => accessory.selectionCode === selectionCode)?.label || selectionCode,
     });
   });
   return rows;
@@ -1560,13 +1635,13 @@ function getPriceItemTargets() {
   return [
     { value: "05.PUMP", label: "05 Pump selection" },
     { value: "07.MODEL", label: "07 Pump model" },
+    { value: "14.ACCESSORY", label: "14 Optional accessories" },
     ...getConfigRuleTargets(),
   ];
 }
 
 function getPriceSelectionOptions(itemCode) {
   if (itemCode === "05.PUMP") return PUMP_CODE_OPTIONS.map((pumpCode) => ({ value: pumpCode, label: pumpCode }));
-  if (itemCode === "06.FAMILY") return [{ value: "", label: "Type family code manually in table if needed" }];
   if (itemCode === "07.MODEL") return [
     { value: "SR", label: "SR" },
     { value: "FK", label: "FK" },
@@ -1576,6 +1651,11 @@ function getPriceSelectionOptions(itemCode) {
     { value: "G", label: "G" },
     { value: "V", label: "V" },
   ];
+  if (itemCode === "14.ACCESSORY") {
+    const accessories = getAccessoryOptions();
+    if (accessories.length) return accessories.map((accessory) => ({ value: accessory.selectionCode, label: accessory.label }));
+    return [{ value: "", label: "Use Add row below for a new accessory" }];
+  }
   return getRuleSelectionOptions(itemCode);
 }
 
@@ -1952,6 +2032,11 @@ sidebarSteps.forEach((step) => {
       saveActiveProject();
       renderConfigPage(getActiveProject());
     }
+    if (page === "accessories" && getActiveProject() && !validateModelSelection()) return;
+    if (page === "accessories" && getActiveProject()) {
+      saveActiveProject();
+      renderAccessoriesPage(getActiveProject());
+    }
     if (page === "pump-config" && getActiveProject() && !validateModelSelection()) return;
     if (page === "pump-config" && getActiveProject()) {
       saveActiveProject();
@@ -2100,6 +2185,20 @@ goToConfigNextBtn.addEventListener("click", () => {
   renderConfigPage(getActiveProject(), currentConfigGroupIndex);
 });
 
+goToAccessoriesBtn.addEventListener("click", () => {
+  saveActiveProject();
+  renderAccessoriesPage(getActiveProject());
+  showPage("accessories");
+});
+
+backToConfigFromAccessoriesBtn.addEventListener("click", () => {
+  currentConfigGroupIndex = CONFIG_OPTION_GROUPS.length - 1;
+  renderConfigPage(getActiveProject(), currentConfigGroupIndex);
+  showPage("config");
+});
+
+saveAccessoriesBtn.addEventListener("click", () => flashSaved(saveAccessoriesBtn));
+
 goToPumpConfigurationBtn.addEventListener("click", () => {
   saveActiveProject();
   renderPumpConfigurationPage(getActiveProject());
@@ -2207,6 +2306,25 @@ configurationOptions.addEventListener("click", (event) => {
   };
   saveProjects();
   renderConfigPage(project);
+});
+
+accessoriesList.addEventListener("change", (event) => {
+  const input = event.target.closest('input[type="checkbox"]');
+  if (!input) return;
+  const project = getActiveProject();
+  if (!project) return;
+
+  const selection = { ...createBlankSelection(), ...(project.selection || {}) };
+  const selected = new Set(selection.optionalAccessories || []);
+  if (input.checked) selected.add(input.value);
+  else selected.delete(input.value);
+
+  project.selection = {
+    ...selection,
+    optionalAccessories: [...selected],
+  };
+  saveProjects();
+  renderAccessoriesPage(project);
 });
 
 if (goToMotorSelectionBtn) {
