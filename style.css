@@ -1736,7 +1736,8 @@ h1 {
   text-transform: uppercase;
 }
 
-.rule-builder select {
+.rule-builder select,
+.rule-builder input {
   width: 100%;
   min-height: 32px;
   border: 1px solid rgba(134, 153, 172, 0.28);
@@ -1748,14 +1749,6 @@ h1 {
 }
 
 .rule-builder input {
-  width: 100%;
-  min-height: 32px;
-  border: 1px solid rgba(134, 153, 172, 0.28);
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.94);
-  color: var(--steel);
-  font: inherit;
-  font-size: 12px;
   padding: 0 8px;
 }
 

@@ -25,6 +25,7 @@ const addRuleBuilderBtn = document.querySelector("#addRuleBuilderBtn");
 const priceBuilder = document.querySelector("#priceBuilder");
 const priceItemCode = document.querySelector("#priceItemCode");
 const priceSelectionCode = document.querySelector("#priceSelectionCode");
+const priceSelectionText = document.querySelector("#priceSelectionText");
 const priceType = document.querySelector("#priceType");
 const priceValue = document.querySelector("#priceValue");
 const priceCurrency = document.querySelector("#priceCurrency");
@@ -1627,7 +1628,12 @@ function getSelectedValues(select) {
 
 function renderPriceBuilder() {
   renderSelectOptions(priceItemCode, getPriceItemTargets(), priceItemCode.value);
-  renderSelectOptions(priceSelectionCode, getPriceSelectionOptions(priceItemCode.value), priceSelectionCode.value);
+  const usesFreeTextSelection = priceItemCode.value === "14.ACCESSORY";
+  priceSelectionCode.classList.toggle("is-hidden", usesFreeTextSelection);
+  priceSelectionText.classList.toggle("is-hidden", !usesFreeTextSelection);
+  if (!usesFreeTextSelection) {
+    renderSelectOptions(priceSelectionCode, getPriceSelectionOptions(priceItemCode.value), priceSelectionCode.value);
+  }
   if (!priceCurrency.value) priceCurrency.value = "EUR";
 }
 
@@ -1635,8 +1641,8 @@ function getPriceItemTargets() {
   return [
     { value: "05.PUMP", label: "05 Pump selection" },
     { value: "07.MODEL", label: "07 Pump model" },
-    { value: "14.ACCESSORY", label: "14 Optional accessories" },
     ...getConfigRuleTargets(),
+    { value: "14.ACCESSORY", label: "14 Optional accessories" },
   ];
 }
 
@@ -1654,7 +1660,7 @@ function getPriceSelectionOptions(itemCode) {
   if (itemCode === "14.ACCESSORY") {
     const accessories = getAccessoryOptions();
     if (accessories.length) return accessories.map((accessory) => ({ value: accessory.selectionCode, label: accessory.label }));
-    return [{ value: "", label: "Use Add row below for a new accessory" }];
+    return [];
   }
   return getRuleSelectionOptions(itemCode);
 }
@@ -1665,6 +1671,16 @@ function getTargetLabel(targets, value) {
 
 function getSelectionLabel(itemCode, selectionCode) {
   return getPriceSelectionOptions(itemCode).find((option) => option.value === selectionCode)?.label || selectionCode;
+}
+
+function getPriceBuilderSelectionCode() {
+  if (priceItemCode.value === "14.ACCESSORY") return priceSelectionText.value.trim();
+  return priceSelectionCode.value;
+}
+
+function getPriceBuilderSelectionLabel(selectionCode) {
+  if (priceItemCode.value === "14.ACCESSORY") return selectionCode;
+  return getSelectionLabel(priceItemCode.value, selectionCode);
 }
 
 async function loadDataset(key) {
@@ -1729,7 +1745,8 @@ ruleOutputCode.addEventListener("change", () => {
 });
 
 priceItemCode.addEventListener("change", () => {
-  renderSelectOptions(priceSelectionCode, getPriceSelectionOptions(priceItemCode.value), "");
+  priceSelectionText.value = "";
+  renderPriceBuilder();
 });
 
 addRuleBuilderBtn.addEventListener("click", async () => {
@@ -1773,7 +1790,8 @@ addRuleBuilderBtn.addEventListener("click", async () => {
 
 addPriceBuilderBtn.addEventListener("click", async () => {
   if (!canEditDatasets() || activeDatasetKey !== "price_rules") return;
-  if (!priceItemCode.value || !priceSelectionCode.value || !priceType.value) {
+  const selectionCode = getPriceBuilderSelectionCode();
+  if (!priceItemCode.value || !selectionCode || !priceType.value) {
     datasetStatus.textContent = "Select item, selection and type first.";
     return;
   }
@@ -1781,14 +1799,14 @@ addPriceBuilderBtn.addEventListener("click", async () => {
   addPriceBuilderBtn.disabled = true;
   addPriceBuilderBtn.textContent = "Adding...";
   const itemLabel = getTargetLabel(getPriceItemTargets(), priceItemCode.value);
-  const selectionLabel = getSelectionLabel(priceItemCode.value, priceSelectionCode.value);
+  const selectionLabel = getPriceBuilderSelectionLabel(selectionCode);
   const response = await authenticatedFetch(`${SUPABASE_URL}/rest/v1/price_rules`, {
     method: "POST",
     headers: { ...apiHeaders(), Prefer: "return=minimal" },
     body: JSON.stringify({
       item_code: priceItemCode.value,
       item_label: itemLabel,
-      selection_code: priceSelectionCode.value,
+      selection_code: selectionCode,
       selection_label: selectionLabel,
       price_type: priceType.value,
       price: priceValue.value === "" ? null : Number(priceValue.value),
@@ -1810,6 +1828,7 @@ addPriceBuilderBtn.addEventListener("click", async () => {
   priceRules = [];
   priceValue.value = "";
   priceNote.value = "";
+  priceSelectionText.value = "";
   await loadDataset("price_rules");
   datasetStatus.classList.add("is-success");
   datasetStatus.textContent = "Price row added.";
