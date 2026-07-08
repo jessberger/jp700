@@ -89,6 +89,7 @@ const configStepNumber = document.querySelector("#configStepNumber");
 const configStepTitle = document.querySelector("#configStepTitle");
 const configurationCode = document.querySelector("#configurationCode");
 const configurationOptions = document.querySelector("#configurationOptions");
+const configPriceSummary = document.querySelector("#configPriceSummary");
 const pumpConfigCode = document.querySelector("#pumpConfigCode");
 const pumpConfigurationGrid = document.querySelector("#pumpConfigurationGrid");
 const priceSummary = document.querySelector("#priceSummary");
@@ -876,6 +877,7 @@ function renderConfigPage(project, groupIndex = currentConfigGroupIndex) {
   configStepTitle.textContent = group.title;
   configurationCode.textContent = getConfigurationCode(selection);
   configurationOptions.innerHTML = renderConfigGroup(group, currentConfigGroupIndex, selection.configOptions || {}, selection);
+  renderPriceSummary(selection, configPriceSummary, { compact: true });
   loadConfigurationRules().then(() => {
     if (getVisiblePage() === "config") {
       const latestProject = getActiveProject();
@@ -895,18 +897,19 @@ function renderPumpConfigurationPage(project) {
   pumpConfigurationGrid.innerHTML = getPumpConfigurationGroups(selection)
     .map((group) => renderPumpConfigurationGroup(group))
     .join("");
-  renderPriceSummary(selection);
+  renderPriceSummary(selection, priceSummary);
 }
 
-async function renderPriceSummary(selection) {
-  if (!priceSummary) return;
+async function renderPriceSummary(selection, target = priceSummary, options = {}) {
+  if (!target) return;
   if (!canViewDatasets()) {
-    priceSummary.classList.add("is-hidden");
+    target.classList.add("is-hidden");
     return;
   }
 
-  priceSummary.classList.remove("is-hidden");
-  priceSummary.innerHTML = `<h3>Price Summary</h3><p class="price-summary-status">Loading prices...</p>`;
+  target.classList.remove("is-hidden");
+  target.classList.toggle("is-compact", Boolean(options.compact));
+  target.innerHTML = `<h3>${options.compact ? "Price" : "Price Summary"}</h3><p class="price-summary-status">Loading prices...</p>`;
 
   await loadPriceRules();
   const entries = getSelectedPriceInputs(selection)
@@ -922,7 +925,7 @@ async function renderPriceSummary(selection) {
     });
 
   if (entries.length === 0) {
-    priceSummary.innerHTML = `<h3>Price Summary</h3><p class="price-summary-status">No price rows found for selected items.</p>`;
+    target.innerHTML = `<h3>${options.compact ? "Price" : "Price Summary"}</h3><p class="price-summary-status">No price rows found for selected items.</p>`;
     return;
   }
 
@@ -932,8 +935,8 @@ async function renderPriceSummary(selection) {
     return sum + entry.price;
   }, 0);
 
-  priceSummary.innerHTML = `
-    <h3>Price Summary</h3>
+  target.innerHTML = `
+    <h3>${options.compact ? "Price" : "Price Summary"}</h3>
     <table class="price-summary-table">
       <tbody>
         ${entries.map((entry) => `

@@ -1051,6 +1051,32 @@ h1 {
   gap: 18px;
 }
 
+.configuration-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 18px;
+  align-items: start;
+}
+
+.configuration-layout .selection-card {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.price-panel {
+  position: sticky;
+  top: 18px;
+  padding: 16px;
+  border: 1px solid rgba(0, 92, 168, 0.14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16px 34px rgba(29, 47, 64, 0.08);
+}
+
+.price-panel.is-hidden {
+  display: none;
+}
+
 .config-option-group {
   display: grid;
   gap: 12px;
@@ -1210,10 +1236,26 @@ h1 {
   border-top: 1px solid rgba(216, 224, 231, 0.82);
 }
 
+.price-panel.price-summary,
+.price-panel {
+  margin: 0;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 92, 168, 0.14);
+}
+
 .price-summary h3 {
   margin: 0 0 10px;
   color: var(--blue-dark);
   font-size: 14px;
+}
+
+.price-panel h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 12px;
+  color: var(--blue-dark);
+  font-size: 15px;
 }
 
 .price-summary-status {
@@ -1246,6 +1288,31 @@ h1 {
   font-size: 13px;
 }
 
+.price-panel .price-summary-table td,
+.price-panel .price-summary-table th {
+  padding: 8px 0;
+}
+
+.price-panel .price-summary-table td:first-child {
+  max-width: 150px;
+  color: var(--steel);
+  font-weight: 700;
+  white-space: normal;
+}
+
+.price-panel .price-summary-table td:nth-child(2) {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.price-panel .price-summary-table tfoot th {
+  padding-top: 12px;
+  border-bottom: 0;
+  font-size: 15px;
+}
+
 @media (max-width: 980px) {
   .workspace-shell {
     grid-template-columns: 1fr;
@@ -1270,6 +1337,14 @@ h1 {
 
   .pump-configuration-group dl {
     grid-template-columns: minmax(130px, 0.42fr) minmax(0, 1fr);
+  }
+
+  .configuration-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .price-panel {
+    position: static;
   }
 }
 
