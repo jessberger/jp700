@@ -178,8 +178,8 @@ const DATASET_CONFIG = [
   ]},
   { key: "price_rules", label: "8.Price_Rules", table: "price_rules", primaryKey: ["price_id"], orderBy: ["price_id"], allowInsertDelete: true, columns: [
     { key: "price_id", label: "ID", type: "integer", locked: true },
-    { key: "item_code", label: "Item code", type: "text" },
     { key: "item_label", label: "Item label", type: "text" },
+    { key: "item_code", label: "Item code", type: "text" },
     { key: "selection_code", label: "Selection code", type: "text" },
     { key: "selection_label", label: "Selection label", type: "text" },
     { key: "price_type", label: "Type", type: "text" },
@@ -894,10 +894,30 @@ function renderPumpConfigurationPage(project) {
   const selection = { ...createBlankSelection(), ...(project.selection || {}) };
   renderProjectContext(pumpConfigProjectContext, project);
   pumpConfigCode.textContent = getConfigurationCode(selection);
-  pumpConfigurationGrid.innerHTML = getPumpConfigurationGroups(selection)
-    .map((group) => renderPumpConfigurationGroup(group))
-    .join("");
-  renderPriceSummary(selection, priceSummary);
+  renderPumpConfigurationList(selection);
+}
+
+async function renderPumpConfigurationList(selection) {
+  pumpConfigurationGrid.innerHTML = `<p class="price-summary-status">Loading configuration...</p>`;
+  if (priceSummary) priceSummary.classList.add("is-hidden");
+  await loadPriceRules();
+
+  const priceMap = getPriceEntryMap(selection);
+  pumpConfigurationGrid.innerHTML = `
+    <section class="pump-configuration-list">
+      <table>
+        <tbody>
+          ${getPumpConfigurationRows(selection).map((row) => renderPumpConfigurationLine(row, priceMap)).join("")}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="2">Total</th>
+            <th>${formatPrice(calculatePriceTotal([...priceMap.values()]), getPriceCurrency([...priceMap.values()]))}</th>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
+  `;
 }
 
 async function renderPriceSummary(selection, target = priceSummary, options = {}) {
@@ -912,28 +932,15 @@ async function renderPriceSummary(selection, target = priceSummary, options = {}
   target.innerHTML = `<h3>${options.compact ? "Price" : "Price Summary"}</h3><p class="price-summary-status">Loading prices...</p>`;
 
   await loadPriceRules();
-  const entries = getSelectedPriceInputs(selection)
-    .flatMap((input) => {
-      const matches = priceRules.filter((rule) => rule.item_code === input.itemCode && rule.selection_code === input.selectionCode);
-      return matches.map((rule) => ({
-        label: rule.selection_label || input.selectionLabel,
-        type: String(rule.price_type || "ADD").toUpperCase(),
-        price: Number(rule.price || 0),
-        currency: rule.currency || "EUR",
-        note: rule.note || "",
-      }));
-    });
+  const entries = getPriceEntries(selection);
 
   if (entries.length === 0) {
     target.innerHTML = `<h3>${options.compact ? "Price" : "Price Summary"}</h3><p class="price-summary-status">No price rows found for selected items.</p>`;
     return;
   }
 
-  const currency = entries.find((entry) => entry.currency)?.currency || "EUR";
-  const total = entries.reduce((sum, entry) => {
-    if (entry.type === "INCLUDED") return sum;
-    return sum + entry.price;
-  }, 0);
+  const currency = getPriceCurrency(entries);
+  const total = calculatePriceTotal(entries);
 
   target.innerHTML = `
     <h3>${options.compact ? "Price" : "Price Summary"}</h3>
@@ -941,9 +948,9 @@ async function renderPriceSummary(selection, target = priceSummary, options = {}
       <tbody>
         ${entries.map((entry) => `
           <tr>
-            <td>${escapeHtml(entry.label)}</td>
+            <td>${escapeHtml(entry.itemLabel ? `${entry.itemLabel}: ${entry.label}` : entry.label)}</td>
             <td>${escapeHtml(entry.type)}</td>
-            <td>${entry.type === "INCLUDED" ? "Included" : formatPrice(entry.price, entry.currency)}</td>
+            <td>${formatLinePrice(entry)}</td>
           </tr>
         `).join("")}
       </tbody>
@@ -955,6 +962,53 @@ async function renderPriceSummary(selection, target = priceSummary, options = {}
       </tfoot>
     </table>
   `;
+}
+
+function getPriceEntries(selection) {
+  return getSelectedPriceInputs(selection)
+    .flatMap((input) => {
+      const matches = priceRules.filter((rule) => rule.item_code === input.itemCode && rule.selection_code === input.selectionCode);
+      return matches.map((rule) => ({
+        key: getPriceKey(input.itemCode, input.selectionCode),
+        itemCode: input.itemCode,
+        itemLabel: rule.item_label || input.itemLabel,
+        selectionCode: input.selectionCode,
+        label: rule.selection_label || input.selectionLabel,
+        type: String(rule.price_type || "ADD").toUpperCase(),
+        price: Number(rule.price || 0),
+        currency: rule.currency || "EUR",
+        note: rule.note || "",
+      }));
+    });
+}
+
+function getPriceEntryMap(selection) {
+  const map = new Map();
+  getPriceEntries(selection).forEach((entry) => {
+    map.set(entry.key, entry);
+  });
+  return map;
+}
+
+function getPriceKey(itemCode, selectionCode) {
+  return `${itemCode}::${selectionCode}`;
+}
+
+function formatLinePrice(entry) {
+  if (!entry) return "-";
+  if (entry.type === "INCLUDED") return "Included";
+  return formatPrice(entry.price, entry.currency);
+}
+
+function calculatePriceTotal(entries) {
+  return entries.reduce((sum, entry) => {
+    if (entry.type === "INCLUDED") return sum;
+    return sum + entry.price;
+  }, 0);
+}
+
+function getPriceCurrency(entries) {
+  return entries.find((entry) => entry.currency)?.currency || "EUR";
 }
 
 async function loadPriceRules() {
@@ -1064,6 +1118,48 @@ function renderPumpConfigurationGroup(group) {
         `).join("")}
       </dl>
     </section>
+  `;
+}
+
+function getPumpConfigurationRows(selection) {
+  const rows = [
+    { itemCode: "PROJECT.CUSTOMER", label: "Customer", value: getActiveProject()?.customer || "-" },
+    { itemCode: "PROJECT.NAME", label: "Project name", value: getActiveProject()?.name || "-" },
+    { itemCode: "PROJECT.OFFER", label: "Offer No", value: getActiveProject()?.offerNo || "-" },
+    { itemCode: "PROJECT.MEDIUM", label: "Medium", value: getActiveProject()?.medium || "-" },
+    { itemCode: "01.TYPE", label: "Type", value: `${labelValue(selection.application)} / ${labelValue(selection.certification)} / ${labelValue(selection.orientation)}` },
+    { itemCode: "02.FLOW", label: "Flow rate", value: getEnteredFlowText(selection) },
+    { itemCode: "03.PRESSURE", label: "Pressure", value: `${selection.pressure || 6} bar` },
+    { itemCode: "04.MEDIA", label: "Media Properties", value: `${selection.abrasivity || "-"} / ${selection.viscosity || "-"}` },
+    { itemCode: "05.PUMP", selectionCode: selection.selectedPump?.pumpCode || "", label: "Pump selection", value: selection.selectedPump?.pumpCode || "-" },
+    { itemCode: "05.RPM", label: "Required RPM", value: selection.selectedPump ? formatRpm(selection.selectedPump.requiredRpm) : "-" },
+    { itemCode: "06.FAMILY", selectionCode: cleanPumpFamilyCode(selection.selectedFamily?.pump_family || ""), label: "Pump family", value: cleanPumpFamilyCode(selection.selectedFamily?.pump_family || "-") },
+    { itemCode: "07.MODEL", selectionCode: selection.selectedModel ? getModelCode(selection.selectedModel) : "", label: "Pump model", value: selection.selectedModel ? formatModelLabel(selection.selectedModel) : "-" },
+  ];
+
+  CONFIG_OPTION_GROUPS.forEach((group, groupIndex) => {
+    group.items.forEach((item, itemIndex) => {
+      const selectedOption = selection.configOptions?.[item.key] || "-";
+      const optionIndex = item.options.findIndex((option) => option === selectedOption);
+      rows.push({
+        itemCode: getConfigVariableCode(groupIndex, itemIndex),
+        selectionCode: optionIndex >= 0 ? String(optionIndex + 1) : "",
+        label: item.key,
+        value: selectedOption,
+      });
+    });
+  });
+  return rows;
+}
+
+function renderPumpConfigurationLine(row, priceMap) {
+  const priceEntry = priceMap.get(getPriceKey(row.itemCode, row.selectionCode));
+  return `
+    <tr>
+      <td>${escapeHtml(row.label)}</td>
+      <td>${escapeHtml(row.value)}</td>
+      <td>${formatLinePrice(priceEntry)}</td>
+    </tr>
   `;
 }
 
