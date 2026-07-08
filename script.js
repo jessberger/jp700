@@ -1801,7 +1801,8 @@ pumpResultsTableBody.addEventListener("click", (event) => {
     selectedModel: null,
   };
   saveProjects();
-  renderPumpResults(project.selection);
+  renderFamilyPage(project);
+  showPage("family");
 });
 
 familyTableBody.addEventListener("click", (event) => {
@@ -1821,7 +1822,8 @@ familyTableBody.addEventListener("click", (event) => {
     selectedModel: null,
   };
   saveProjects();
-  renderFamilyPage(project);
+  renderModelPage(project);
+  showPage("model");
 });
 
 modelTableBody.addEventListener("click", (event) => {
@@ -1842,7 +1844,9 @@ modelTableBody.addEventListener("click", (event) => {
     },
   };
   saveProjects();
-  renderModelPage(project);
+  currentConfigGroupIndex = 0;
+  renderConfigPage(project, currentConfigGroupIndex);
+  showPage("config");
 });
 
 configurationOptions.addEventListener("click", (event) => {
