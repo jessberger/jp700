@@ -1032,15 +1032,18 @@ h1 {
 }
 
 .configuration-code {
+  width: fit-content;
+  max-width: 100%;
   margin: 0 0 18px;
-  padding: 14px 16px;
+  padding: 10px 14px;
   border: 1px solid rgba(0, 92, 168, 0.16);
   border-radius: 8px;
   color: var(--blue-dark);
   background: rgba(232, 242, 250, 0.78);
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 15px;
+  font-weight: 900;
   letter-spacing: 0;
+  box-shadow: 0 10px 22px rgba(0, 92, 168, 0.08);
 }
 
 .configuration-options {
