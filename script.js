@@ -623,7 +623,8 @@ function calculatePumpResults(selection, data) {
   return [...(data.pump_limits || [])].map((pump) => {
     const pumpCode = normalizeCode(pump.pump_code);
     const formula = formulaByPump.get(pumpCode);
-    const efficiencyRow = efficiencyByPumpPressure.get(`${pumpCode}|${pressure}`);
+    const pumpPressure = getPumpPressureStage(pumpCode) || pressure;
+    const efficiencyRow = efficiencyByPumpPressure.get(`${pumpCode}|${pumpPressure}`);
     const mediaRow = abbVisBySection.get(Number(pump.section_number));
     const isSelectable = isPumpSelectable(selection.orientation, pump.installation);
     const efficiency = Number(efficiencyRow?.efficiency);
@@ -649,6 +650,14 @@ function createLookup(rows, keyGetter) {
 
 function normalizeCode(value) {
   return String(value ?? "").trim();
+}
+
+function getPumpPressureStage(pumpCode) {
+  const stage = normalizeCode(pumpCode).match(/\.([124])$/)?.[1];
+  if (stage === "1") return 6;
+  if (stage === "2") return 12;
+  if (stage === "4") return 24;
+  return null;
 }
 
 function getGroupNumber(value) {

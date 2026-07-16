@@ -90,7 +90,14 @@ begin
       )::numeric as calc_required_rpm
     from public.pump_limits pl
     left join public.rpm_formula rf on rf.pump_code = pl.pump_code
-    left join public.efficiency ef on ef.pump_code = pl.pump_code and ef.pressure_bar = p_pressure_bar
+    left join public.efficiency ef
+      on ef.pump_code = pl.pump_code
+      and ef.pressure_bar = case
+        when pl.pump_code::text like '%.1' then 6
+        when pl.pump_code::text like '%.2' then 12
+        when pl.pump_code::text like '%.4' then 24
+        else p_pressure_bar
+      end
     left join public.abb_vis av on av.section = pl.section_number
   ), max_base as (
     select
